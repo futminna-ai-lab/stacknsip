@@ -1,0 +1,527 @@
+{
+  "categories": [
+    {
+      "id": "wafflin",
+      "title": "EVERYDAY I’M WAFFLIN’",
+      "subtitle": "(Waffle Dogs)",
+      "items": [
+        [
+          "Waffle dog",
+          7500,
+          "Choose 2 sauces: mustard, ketchup, sweet chili, Yum Yum, Randy’s Ranch, garlic or spicy mayo."
+        ]
+      ],
+      "photo": "assets/waffle-dogs.jpg",
+      "photoAlt": "Waffle dogs on sticks from Stack & Sip",
+      "photoSource": "https://www.instagram.com/stacknsip_/p/DavLaCbIno9/"
+    },
+    {
+      "id": "bubble-drops",
+      "title": "MINI BUBBLE DROPS",
+      "items": [
+        [
+          "15pcs",
+          8500,
+          "2 syrups & 2 toppings."
+        ],
+        [
+          "20pcs",
+          12000,
+          "3 syrups & 3 toppings."
+        ],
+        [
+          "50pcs",
+          15000,
+          "4 syrups, 4 toppings, 3 fruits, ice cream & whipped cream."
+        ]
+      ],
+      "photo": "assets/bubble-drops-illustration.png",
+      "photoAlt": "Golden bubble waffle drops with chocolate drizzle (illustrative image)",
+      "photoGenerated": true
+    },
+    {
+      "id": "mini-pancakes",
+      "title": "MINI PANCAKES",
+      "items": [
+        [
+          "8pcs",
+          8500,
+          "2 syrups & 2 toppings."
+        ],
+        [
+          "15pcs",
+          12000,
+          "2 syrups & 2 toppings."
+        ],
+        [
+          "25pcs",
+          18500,
+          "4 syrups, 4 toppings & ice cream."
+        ]
+      ],
+      "photo": "assets/mini-pancakes-illustration.png",
+      "photoAlt": "Golden pancakes with syrup and berries (illustrative image)",
+      "photoGenerated": true
+    },
+    {
+      "id": "pocket-waffles",
+      "title": "POCKET WAFFLES",
+      "items": [
+        [
+          "2pcs",
+          7500,
+          "1 syrup & 1 topping."
+        ],
+        [
+          "4pcs",
+          8500,
+          "2 syrups & 1 topping."
+        ],
+        [
+          "6pcs",
+          9000,
+          "2 syrups & 2 toppings."
+        ],
+        [
+          "6pcs",
+          9500,
+          "2 syrups & 3 toppings."
+        ],
+        [
+          "8pcs",
+          10000,
+          "2 syrups, 2 toppings, 1 fruit & whipped cream."
+        ],
+        [
+          "8pcs",
+          15000,
+          "2 syrups, 2 toppings, 3 fruits, ice cream & whipped cream."
+        ]
+      ],
+      "photo": "assets/pocket-waffles-illustration.png",
+      "photoAlt": "Small golden waffles with chocolate drizzle (illustrative image)",
+      "photoGenerated": true
+    },
+    {
+      "id": "extras",
+      "title": "EXTRAS",
+      "items": [],
+      "extras": [
+        {
+          "title": "Sauces",
+          "items": [
+            [
+              "Chocolate",
+              800
+            ],
+            [
+              "Biscoff",
+              1500
+            ],
+            [
+              "Strawberry",
+              800
+            ],
+            [
+              "Choco Hazelnut",
+              1000
+            ],
+            [
+              "Caramel",
+              800
+            ],
+            [
+              "Peanut Butter",
+              600
+            ],
+            [
+              "Pancake Syrup",
+              600
+            ],
+            [
+              "Blueberry",
+              1000
+            ]
+          ]
+        },
+        {
+          "title": "Toppings",
+          "items": [
+            [
+              "Rainbow Sprinkles",
+              800
+            ],
+            [
+              "Gummy Bears",
+              800
+            ],
+            [
+              "Smarties",
+              600
+            ],
+            [
+              "Peanuts",
+              500
+            ],
+            [
+              "Cookie Crumbs",
+              500
+            ],
+            [
+              "Cashew",
+              800
+            ],
+            [
+              "Marshmallows",
+              1350
+            ],
+            [
+              "Bubblegum Bottles",
+              2000
+            ],
+            [
+              "Honeycomb",
+              600
+            ],
+            [
+              "Peanut Brittle",
+              300
+            ],
+            [
+              "Jelly Beans",
+              1000
+            ],
+            [
+              "Skittles",
+              500
+            ],
+            [
+              "Choco Chips",
+              600
+            ],
+            [
+              "Coconut Flakes",
+              500
+            ],
+            [
+              "Almond Flakes",
+              1000
+            ]
+          ]
+        }
+      ],
+      "note": "Fruits: Strawberries · Bananas · Grapes · Pineapple · Blueberries",
+      "icecream": [
+        "Ice Cream Scoop",
+        1500
+      ],
+      "photo": "assets/extras-illustration.png",
+      "photoAlt": "Sauces, fruit, whipped cream and sprinkles (illustrative image)",
+      "photoGenerated": true
+    },
+    {
+      "id": "chicken-poppers",
+      "title": "CHICKEN POPPERS",
+      "items": [
+        [
+          "Suya dusted poppers",
+          8000,
+          ""
+        ],
+        [
+          "BBQ poppers",
+          8000,
+          ""
+        ],
+        [
+          "Plain poppers",
+          7500,
+          ""
+        ],
+        [
+          "Sweet chili poppers",
+          8000,
+          ""
+        ],
+        [
+          "Randy’s poppers",
+          8000,
+          ""
+        ],
+        [
+          "Yum yum poppers",
+          8000,
+          ""
+        ],
+        [
+          "Combo poppers",
+          9500,
+          "Poppers, fries and sauce."
+        ]
+      ],
+      "photo": "assets/chicken-poppers-illustration.png",
+      "photoAlt": "Crispy chicken poppers with dipping sauce (illustrative image)",
+      "photoGenerated": true
+    },
+    {
+      "id": "oh-crepe-sweet",
+      "title": "OH CREPE! SWEET",
+      "items": [
+        [
+          "Fluffy dream",
+          7500,
+          "Strawberry jam, peanut butter and banana, drizzled with chocolate & marshmallows."
+        ],
+        [
+          "You crepe",
+          7500,
+          "Rolls with chocolate syrup, Biscoff, caramel & peanut brittle."
+        ],
+        [
+          "Ooui",
+          7500,
+          "Strawberry, banana & blueberry filled with whipped cream."
+        ],
+        [
+          "French kiss",
+          8500,
+          "Strawberries, chocolate syrup, caramel, Smarties & ice cream."
+        ],
+        [
+          "DIY",
+          8500,
+          "Build your own with 1 syrup, 1 fruit & 1 topping. Extra charges for more toppings."
+        ]
+      ],
+      "photo": "assets/oh-crepe-sweet-illustration.png",
+      "photoAlt": "Sweet crepes with berries and chocolate (illustrative image)",
+      "photoGenerated": true
+    },
+    {
+      "id": "savoury-crepes",
+      "title": "SAVOURY CREPES",
+      "subtitle": "(Mini Wraps)",
+      "items": [
+        [
+          "Vintage roll",
+          7000,
+          "Spicy succulent beef rolls with eggs."
+        ],
+        [
+          "The Duke",
+          7500,
+          "Caramelized onion, ham & cheese stuffed."
+        ],
+        [
+          "Little Italy",
+          8500,
+          "Smoked chicken, kale & Parmigiano."
+        ],
+        [
+          "The barn",
+          7500,
+          "Kale, mushroom & cheese, topped with sunnyside egg."
+        ],
+        [
+          "DIY",
+          8500,
+          "Build your own with 1 protein & 2 vegetables. Extra charges for more filling."
+        ]
+      ],
+      "extras": [
+        {
+          "title": "Extra fillings",
+          "items": [
+            [
+              "Cheese",
+              800
+            ],
+            [
+              "Egg",
+              300
+            ],
+            [
+              "Beef",
+              500
+            ],
+            [
+              "Sausage",
+              500
+            ],
+            [
+              "Chicken",
+              800
+            ],
+            [
+              "Fish Chunks",
+              800
+            ],
+            [
+              "Kale",
+              200
+            ],
+            [
+              "Caramelized Onions",
+              200
+            ],
+            [
+              "Ham",
+              800
+            ],
+            [
+              "Mushrooms",
+              500
+            ],
+            [
+              "Beef Steak",
+              800
+            ]
+          ]
+        }
+      ],
+      "photo": "assets/savoury-crepes-illustration.png",
+      "photoAlt": "Savoury crepes with chicken and vegetables (illustrative image)",
+      "photoGenerated": true
+    },
+    {
+      "id": "croissant-sandwiches",
+      "title": "CROISSANT SANDWICHES",
+      "items": [
+        [
+          "Spicy Beef Steak",
+          10000,
+          "Buttery croissant filled with beef steak, lettuce, cucumber, tomatoes & caramelized onions."
+        ],
+        [
+          "Honey Mustard Chicken",
+          10500,
+          "Flaky croissant filled with chicken, honey mustard, lettuce, tomatoes, cucumbers & pickled or caramelized onions."
+        ],
+        [
+          "Tuna Sweet Corn Melt",
+          8500,
+          "Golden croissant stuffed with creamy tuna & sweet corn mix, melted cheese & fresh veggies."
+        ],
+        [
+          "Sunnyside Eggs & Sausage",
+          8000,
+          "Croissant with juicy sausage, sunny side eggs & cheese for a hearty breakfast feel."
+        ],
+        [
+          "Extra: Fries",
+          2000,
+          ""
+        ]
+      ],
+      "photo": "assets/food-spread.jpg",
+      "photoAlt": "Stack & Sip food spread with a croissant sandwich and sides",
+      "photoSource": "https://www.instagram.com/stacknsip_/p/DdLxSyEucdV/"
+    },
+    {
+      "id": "froyo",
+      "title": "FROYO(Frozen Yogurt)",
+      "items": [
+        [
+          "Classic froyo",
+          7500,
+          "With 1 topping."
+        ]
+      ],
+      "photo": "assets/froyo-illustration.png",
+      "photoAlt": "Frozen yogurt with berries (illustrative image)",
+      "photoGenerated": true
+    },
+    {
+      "id": "churros",
+      "title": "MINI CHURROS & DIP",
+      "items": [
+        [
+          "Mini churros & chocolate dip",
+          7500,
+          ""
+        ],
+        [
+          "Extra Chocolate",
+          800,
+          ""
+        ]
+      ],
+      "photo": "assets/mini-churros.jpg",
+      "photoAlt": "Mini churros and dipping sauces in Stack & Sip packaging",
+      "photoSource": "https://www.instagram.com/stacknsip_/p/DcdiMgOOqpx/"
+    },
+    {
+      "id": "iced-coffee",
+      "title": "ICED COFFEE",
+      "items": [
+        [
+          "Choco iced coffee",
+          7000,
+          "With chocolate syrup."
+        ],
+        [
+          "Iced Mocha",
+          7500,
+          "With whipped cream, choco syrup and cookie crumbs."
+        ],
+        [
+          "Slushy caramel Frappe",
+          8500,
+          "With whipped cream & caramel."
+        ],
+        [
+          "Iced coco",
+          7000,
+          "With toasted marshmallows."
+        ],
+        [
+          "Cold brew float",
+          8000,
+          "With ice cream."
+        ],
+        [
+          "Oreo freeze frappe",
+          8500,
+          "Whipped cream, chocolate syrup and Oreos crumbs."
+        ],
+        [
+          "Spanish Iced Latte (without Boba)",
+          7000,
+          ""
+        ],
+        [
+          "Spanish Iced Latte (with Boba)",
+          8000,
+          ""
+        ],
+        [
+          "Extras: Boba",
+          2000,
+          ""
+        ]
+      ],
+      "photo": "assets/cafe-drinks.jpg",
+      "photoAlt": "Stack & Sip cold café drinks in branded cups",
+      "photoSource": "https://www.instagram.com/stacknsip_/p/Dc6Q9g8IBf4/"
+    },
+    {
+      "id": "drinks",
+      "title": "DRINKS",
+      "items": [
+        [
+          "Florida Cranberry",
+          5500,
+          ""
+        ],
+        [
+          "Water",
+          700,
+          ""
+        ]
+      ],
+      "photo": "assets/fruit-drinks.jpg",
+      "photoAlt": "Bottled fruit drinks outside Stack & Sip",
+      "photoSource": "https://www.instagram.com/stacknsip_/p/DZNeJJUIEFy/"
+    }
+  ]
+}

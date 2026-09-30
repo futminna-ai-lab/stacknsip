@@ -1,0 +1,24 @@
+import {JSDOM} from 'jsdom';
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const script=name=>fs.readFileSync('public/assets/'+name,'utf8');
+const tick=()=>new Promise(resolve=>setTimeout(resolve,20));
+function browser(html){return new JSDOM(html,{url:'https://example.netlify.app/cart.html',runScripts:'outside-only'}).window;}
+// Unconfigured sites keep the existing static menu; configured failures never fall back to stale prices.
+let w=browser('<p data-delivery-info></p>');let calls=[];w.fetch=async url=>{calls.push(url);return {ok:true,json:async()=>({categories:[]})};};w.eval(script('backend.js'));await w.StackBackend.getMenu();assert.deepEqual(calls,['assets/menu.json']);w.close();
+w=browser('<p data-delivery-info></p>');w.STACK_CONFIG={supabaseUrl:'https://project.example.test',supabasePublishableKey:'sb_publishable_TEST'};w.fetch=async()=>({ok:false});w.eval(script('backend.js'));await assert.rejects(w.StackBackend.getMenu(),/live menu/);w.close();
+w=browser('<p data-delivery-info></p>');w.STACK_CONFIG={supabaseUrl:'https://project.example.test',supabasePublishableKey:'sb_publishable_TEST'};w.fetch=async url=>({ok:true,json:async()=>url.includes('categories?')?[{id:'waffles',title:'Waffles'}]:url.includes('products?')?[{id:'waffles:0',category_id:'waffles',name:'Test',price:8000,available:false,photo:'https://example.test/photo.jpg'}]:[{delivery_fee:7000,delivery_area:'Abuja Municipal',accepting_orders:false,delivery_note:'Test'}]});w.eval(script('backend.js'));const menu=await w.StackBackend.getMenu();assert.equal(menu.categories[0].items[0][1],8000);assert.equal(menu.categories[0].items[0][3].available,false);assert.match(w.document.querySelector('[data-delivery-info]').textContent,/7,000/);w.close();
+// Checkout updates its receipt and message from the saved server response, not the draft cart prices.
+w=browser(fs.readFileSync('public/cart.html','utf8'));w.Blob=Blob;w.TextEncoder=TextEncoder;w.URL.createObjectURL=()=> 'blob:test';w.URL.revokeObjectURL=()=>{};w.Image=class {set src(value){queueMicrotask(()=>this.onerror());}};
+const canvasText=[];let broken=false;const ctx={measureText:t=>({width:t.length*10}),fillText:t=>canvasText.push(t),fillRect(){},drawImage(){},beginPath(){},moveTo(){},lineTo(){},stroke(){}};
+w.HTMLCanvasElement.prototype.getContext=()=>ctx;w.HTMLCanvasElement.prototype.toBlob=function(callback,type){callback(broken?null:new Blob(['test-image'],{type}));};
+w.StackBackend={configured:true,settings:{delivery_fee:6500,accepting_orders:true}};let submissions=0;
+w.fetch=async()=>{submissions++;return {ok:true,json:async()=>({order:{reference:'SS-SAVED-REFERENCE',tracking_token:'b76b047a-54d4-42ef-9b34-fb3678b35a3e',items:[{id:'waffles:0',name:'Test waffle',category:'Waffles',price:8000,quantity:2}],subtotal:16000,delivery_fee:7000,created_at:'2026-09-30T12:00:00Z'}})};};
+w.eval(script('receipt.js'));const f=w.document.getElementById('order-form');f.elements.name.value='Test Customer';f.elements.phone.value='08161248972';f.elements.fulfillment.value='Delivery';f.elements.address.value='Abuja';
+w.StackReceipt.setItems([{id:'waffles:0',name:'Test waffle',category:'Waffles',price:7500,quantity:2,available:true}]);f.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await tick();w.document.querySelector('[data-submit-online]').click();await tick();await tick();
+assert.equal(submissions,1);assert.ok(w.document.querySelector('[data-track-order]').href.includes('track.html#token='));assert.ok(canvasText.some(t=>t.includes('track.html#token=')));assert.match(w.document.getElementById('order-result').textContent,/SS-SAVED-REFERENCE/);assert.equal(w.document.querySelector('[data-submit-online]'),null);assert.ok(canvasText.some(t=>t.includes('16,000')));assert.ok(canvasText.some(t=>t.includes('23,000')));assert.ok(w.document.querySelector('[download]').download.includes('SS-SAVED-REFERENCE'));
+// A failed card regeneration cannot expose downloads carrying the old reference.
+f.dispatchEvent(new w.Event('input',{bubbles:true}));f.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await tick();broken=true;w.document.querySelector('[data-submit-online]').click();await tick();await tick();assert.equal(w.document.querySelector('[download]'),null);assert.equal(w.document.querySelector('[data-share-order]'),null);assert.match(w.document.getElementById('order-result').textContent,/Order submitted/);w.close();
+// The admin cannot pretend to authenticate before a project is connected.
+w=browser(fs.readFileSync('public/admin.html','utf8'));w.eval(script('admin.js'));assert.equal(w.document.getElementById('setup-notice').hidden,false);assert.equal(w.document.getElementById('login-form').querySelector('button').disabled,true);w.close();
+console.log('PASS: live-menu failure handling; changed prices/availability; authoritative receipt reference and totals; stale-file removal; admin setup gate.');

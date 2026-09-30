@@ -1,0 +1,16 @@
+import {JSDOM} from 'jsdom';import fs from 'node:fs';import assert from 'node:assert/strict';
+const token='b76b047a-54d4-42ef-9b34-fb3678b35a3e';
+const w=new JSDOM(fs.readFileSync('public/track.html','utf8'),{url:'https://example.netlify.app/track.html#token='+token,runScripts:'outside-only',pretendToBeVisual:true}).window;
+let poll,status='pending',fee=6500,requests=0;w.AbortSignal=AbortSignal;w.setInterval=callback=>{poll=callback;};
+const tick=()=>new Promise(resolve=>setTimeout(resolve,20));
+w.fetch=async(url,options)=>{requests++;assert.equal(url,'/.netlify/functions/order-status');assert.equal(JSON.parse(options.body).token,token);return {ok:true,json:async()=>({order:{reference:'SS-PRIVATE-ORDER',status,fulfillment:'Pickup',items:[{name:'<script>unsafe</script>',price:7500,quantity:1}],subtotal:7500,delivery_fee:fee,total:7500+fee,payment_status:'unpaid',created_at:'2026-09-30T12:00:00Z',updated_at:'2026-09-30T12:00:00Z'}})};};
+w.eval(fs.readFileSync('public/assets/tracking.js','utf8'));await tick();
+assert.equal(w.document.querySelector('.tracking-status').textContent,'Pending');assert.equal(w.document.querySelector('#tracking-order').hidden,false);assert.equal(w.document.querySelector('#tracking-items script'),null);
+status='confirmed';fee=7000;poll();await tick();assert.equal(w.document.querySelector('.tracking-status').textContent,'Confirmed');assert.match(w.document.querySelector('#tracking-totals').textContent,/14,500/);
+status='preparing';poll();await tick();assert.equal(w.document.querySelector('[aria-current="step"]').textContent,'Preparing');
+status='ready';poll();await tick();assert.equal(w.document.querySelector('.tracking-status').textContent,'Ready for pickup');
+status='completed';poll();await tick();assert.equal(w.document.querySelector('.tracking-status').textContent,'Completed');const before=requests;poll();await tick();assert.equal(requests,before);
+status='cancelled';w.document.querySelector('#refresh-tracking').click();await tick();assert.equal(w.document.querySelector('.tracking-status').textContent,'Cancelled');assert.equal(w.document.querySelector('#tracking-steps').hidden,true);
+w.close();
+const empty=new JSDOM(fs.readFileSync('public/track.html','utf8'),{url:'https://example.netlify.app/track.html',runScripts:'outside-only',pretendToBeVisual:true}).window;empty.setInterval=()=>{};empty.fetch=()=>{throw Error('must not fetch');};empty.eval(fs.readFileSync('public/assets/tracking.js','utf8'));assert.equal(empty.document.querySelector('#tracking-order').hidden,true);empty.document.querySelector('#tracking-link').value='SS-GUESSED-REFERENCE';empty.document.querySelector('#tracking-form').dispatchEvent(new empty.Event('submit',{bubbles:true,cancelable:true}));assert.match(empty.document.querySelector('#tracking-feedback').textContent,/private tracking link/);empty.close();
+console.log('PASS: customer pending/confirmed/preparing/ready/completed/cancelled; live fee updates; escaped item names; polling ends on final statuses; missing link never queries an order.');

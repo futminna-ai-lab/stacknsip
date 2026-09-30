@@ -1,0 +1,16 @@
+{
+  "name": "stacknsip-staff-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/prepare-config.cjs",
+    "test": "node tests/database.mjs && node tests/api.cjs && node tests/frontend.mjs && node tests/tracking.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "jsdom": "30.1.1"
+  }
+}
