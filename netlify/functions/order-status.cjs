@@ -8,7 +8,7 @@ exports.handler=async event=>{
   if(typeof token!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token))return reply(400,{error:'Use the private tracking link provided with your order.'});
   const saved=await rpc('track_order',{p_request_id:token});
   if(!saved)return reply(404,{error:'Order not found. Check the tracking link from your order confirmation.'});
-  const order={};for(const field of ['reference','status','fulfillment','items','subtotal','delivery_fee','total','payment_status','created_at','updated_at'])order[field]=saved[field];
+    const order={};for(const field of ['reference','status','fulfillment','items','subtotal','delivery_fee','total','payment_method','payment_status','payment_submission_id','payment_reference','payment_submitted_at','payment_verified_at','payment_rejection_reason','bank_name','account_name','account_number','created_at','updated_at'])order[field]=saved[field];
   return reply(200,{order});
  }catch(error){
   if(error instanceof SyntaxError)return reply(400,{error:'Invalid tracking link.'});

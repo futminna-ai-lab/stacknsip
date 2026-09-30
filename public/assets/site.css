@@ -72,3 +72,15 @@ h1,h2,h3,h4{letter-spacing:normal}.hero h1{letter-spacing:normal}
  .hero-content{padding-top:70px}
 }
 @media(prefers-reduced-motion:reduce){.main-header .announcement-group{white-space:normal;gap:6px 18px}.main-header .announcement-controls{display:none}}
+.main-header .header-links a[href="#categories"],.main-header .header-links a[href="./#categories"]{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 15px;border:1px solid var(--purple);border-radius:22px;background:var(--purple);color:#fff;font-weight:700;text-decoration:none;transition:background-color .15s ease,color .15s ease}
+.main-header .header-links a[href="#about"],.main-header .header-links a[href="./#about"]{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 15px;border:1px solid var(--pink);border-radius:22px;background:var(--pink);color:var(--deep);font-weight:700;text-decoration:none;transition:background-color .15s ease,color .15s ease}
+.main-header .header-links a[href="#categories"]:hover,.main-header .header-links a[href="./#categories"]:hover{background:var(--deep);border-color:var(--deep);color:#fff}
+.main-header .header-links a[href="#about"]:hover,.main-header .header-links a[href="./#about"]:hover{background:#e8b4d3;border-color:#e8b4d3;color:var(--deep)}
+.main-header .header-links a:focus-visible{outline:3px solid var(--deep);outline-offset:3px}
+.footer-grid>div:nth-child(3){display:flex;flex-direction:column;align-items:flex-start;gap:9px}
+.footer-grid>div:nth-child(3) h3{margin:0 0 3px;color:var(--pink);font-size:17px}
+.footer-grid>div:nth-child(3) p{margin:0;line-height:1.65}
+.footer-grid>div:nth-child(3) a{display:inline-flex;max-width:100%;overflow-wrap:anywhere;line-height:1.5;text-decoration:none}
+.footer-grid>div:nth-child(3) a:hover{text-decoration:underline;text-decoration-color:var(--pink);text-underline-offset:3px}
+.footer-grid>div:nth-child(3) [data-delivery-info],.footer-grid>div:nth-child(3) .footer-hours{width:100%;padding:10px 12px;border-left:3px solid var(--pink);background:rgba(255,255,255,.07);border-radius:0 5px 5px 0}
+.footer-grid>div:nth-child(3) .footer-hours{margin:0}

@@ -7,7 +7,8 @@ Your Supabase project URL and publishable key have been added to connection.json
 1. Sign in at https://supabase.com/dashboard and create a new project.
 2. Open the project's SQL Editor. Paste the complete contents of `supabase/install.sql` and run it **once on a new project**. This combined file installs the schema, tracking function and menu in one step.
 3. Alternatively, run schema.sql followed by seed.sql. Do not run both installation methods.
-4. Confirm the Table Editor shows 13 categories, 84 products and one shop settings row. The temporary Abuja Municipal delivery fee is ₦6,500; staff can update it later.
+4. After either install method, run `supabase/migrations/002_bank_transfer_payments.sql` once. It adds payment submissions, review functions and the private `payment-receipts` bucket. It is safe to rerun.
+5. Confirm the Table Editor shows 13 categories, 84 products and one shop settings row. The temporary Abuja Municipal delivery fee is ₦6,500; staff can update it later.
 
 The schema also creates the public `menu-images` bucket, protected staff upload permissions and an owner access record for **umar.umar@st.futminna.edu.ng**. The record alone is not a login account; invite the owner in step 4.
 
@@ -23,7 +24,7 @@ Netlify settings are already in `netlify.toml`:
 - Publish directory: `public`
 - Functions directory: `netlify/functions`
 
-Use Node 24 for builds. Netlify should deploy all three `submit-order`, `order-status` and `invite-staff` functions. A static drag-and-drop upload of just `public` will not provide these server functions or run the configuration build. Use a Git-connected deployment for this package.
+Use Node 24 for builds. Netlify should deploy `submit-order`, `order-status`, `order-receipt`, `invite-staff`, `payment-upload-url`, `payment-submit` and `payment-receipt-url`. A static drag-and-drop upload of just `public` will not provide these server functions or run the configuration build. Use a Git-connected deployment for this package.
 
 This package now connects to your supplied Supabase project by default. Install the schema and seed before deployment so the live menu can load. Copy your resulting HTTPS Netlify address for the next steps.
 
@@ -65,10 +66,14 @@ Configure your own SMTP email provider in Supabase Authentication for reliable p
 2. Mark that product sold out and check that Add To Cart is disabled. Restore it after testing.
 3. Submit a small test pickup order from the customer website. Confirm it appears in Orders with zero delivery fee and the current item price.
 4. Submit a delivery test; confirm the estimated fee and address. Check the saved PDF/image uses the same reference as the dashboard.
-5. Open the customer's private tracking link. Change status and the confirmed delivery fee in the dashboard, then confirm the tracking page updates within 15 seconds. Older orders should keep their original item prices.
-6. Invite a staff account and verify that it can manage orders/menu but cannot invite others. Revoke that account and confirm order access stops.
-7. Pause online ordering and confirm new submissions are rejected. Resume when ready.
-8. Check the mobile dashboard and customer pages on a phone, and test WhatsApp sharing.
+5. In Staff dashboard → Shop settings, enter the customer-facing bank name, account name and account number. Save before taking payment submissions.
+6. Open a customer's private tracking link. Confirm the saved total and transfer instructions, upload a JPG, PNG or PDF under 5 MB, and confirm Verification Pending appears.
+7. In Orders, open the order, view the payment receipt, and verify or reject it with a reason. Confirm payment and order status remain separate, the customer sees the result, and rejected payments can be resubmitted.
+8. Change order status and the confirmed delivery fee; confirm tracking updates within 15 seconds and still shows the latest values after refresh.
+9. Submit a delivery test; confirm the estimated fee and address. Check the saved PDF/image uses the same reference as the dashboard.
+10. Invite a staff account and verify that it can manage orders/menu but cannot invite others. Revoke that account and confirm order access stops.
+11. Pause online ordering and confirm new submissions are rejected. Resume when ready.
+12. Check the mobile dashboard and customer pages on a phone, and test WhatsApp sharing.
 
 Mark test orders cancelled so staff can distinguish them from real requests.
 
@@ -78,7 +83,7 @@ Mark test orders cancelled so staff can distinguish them from real requests.
 - Customers must click **Submit order to café** for an order to enter this dashboard. Generating a card alone does not submit it.
 - WhatsApp sharing opens a prepared message; the user still taps Send and attaches/downloads the PDF or image as needed. No paid WhatsApp automation is configured.
 - UpMenu orders remain in UpMenu. Its existing link does not synchronize its menu or orders with Supabase.
-- This package records paid/unpaid status but does not take payments or verify transactions automatically.
+- Bank transfer is manual: staff must compare the receipt to the actual bank transaction and verify or reject it in Orders.
 - Change prices, availability and pictures from Menu. Shop settings controls the delivery estimate and online ordering switch.
 - Uploaded pictures are public menu assets; customer order details are staff-only. Use Supabase's backup options and restrict access to the Supabase/Netlify accounts to trusted administrators.
 
@@ -90,6 +95,8 @@ Mark test orders cancelled so staff can distinguish them from real requests.
 | Menu says live menu unavailable | Project URL/key, SQL installation and Supabase project status |
 | Submit says unavailable or gives a non-JSON response | Both Netlify functions deployed, not only static HTML |
 | Online submission is not connected | `SUPABASE_URL` and `SUPABASE_SECRET_KEY` exist in Functions environment |
+| Payment instructions are unavailable | Run `002_bank_transfer_payments.sql`, then enter bank details in Staff dashboard → Shop settings |
+| Payment receipt upload/view fails | Confirm the private bucket exists, the migration is applied, and Netlify `SUPABASE_URL` matches the browser project |
 | Invitation/password link fails | Allowed `/admin.html` redirect, email delivery/SMTP and expired links |
 | Account has no staff access | Verified email matches an active `staff_members` row |
 | Menu edit conflicts | Another staff member edited it; refresh then retry |
@@ -98,6 +105,6 @@ Official guides: https://docs.netlify.com/build/functions/get-started/ · https:
 
 ## Updating an earlier installation
 
-If you already installed the previous database package, run only `supabase/migrations/001_customer_tracking.sql` to add tracking, then deploy this updated project. Do not rerun schema.sql or seed.sql. Earlier orders can also be tracked using the link in the staff dashboard's prepared WhatsApp update. For a new Supabase project, schema.sql already includes the tracking function.
+If you already installed the previous database package, run `supabase/migrations/001_customer_tracking.sql` if tracking was not already installed, then run `supabase/migrations/002_bank_transfer_payments.sql`. Do not rerun schema.sql or seed.sql. For a new Supabase project, install the schema and seed first, then apply migration 002.
 
-A customer receives the tracking link immediately after a successful website submission. The PDF/image and prepared WhatsApp message include it as well. Keep it private: anyone holding the link can see that order's status and item summary. Phone numbers, delivery addresses, customer notes and internal staff notes are excluded. Automatic WhatsApp/email/push notifications are not configured; updates appear on the tracking page while it is open.
+A customer receives the tracking link immediately after a successful website submission. The PDF/image and prepared WhatsApp message include it as well. Keep it private: anyone holding the link can see that order's status and item summary, and request its order receipt or payment receipt. Routine tracking omits phone/address and internal staff notes. Automatic WhatsApp/email/push notifications are not configured; status and payment updates appear on the tracking page while it is open.

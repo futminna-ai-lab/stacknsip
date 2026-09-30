@@ -9,6 +9,7 @@ This package includes the complete customer website, staff dashboard, Supabase d
 - Review customer details, items, quantities, delivery addresses and notes.
 - Search orders and update their status: pending, confirmed, preparing, ready, completed or cancelled.
 - Record payment status, adjust an order's confirmed delivery fee and add private notes.
+- Review private bank-transfer receipts, view submission history, and verify or reject payments with a reason.
 - Change product names, prices, descriptions and availability; upload replacement pictures.
 - Pause online ordering and change the default delivery estimate.
 - Prepare a WhatsApp message to a customer. The staff member still taps Send.
@@ -18,7 +19,7 @@ The dashboard checks for new orders every 30 seconds while its Orders tab is vis
 
 ## Customers can
 
-Browse category pages, add items to a cart, enter pickup/delivery details and generate a branded order PDF/image. Once Supabase and Netlify are connected, customers can submit an order directly to the café dashboard. The saved receipt uses the server's current prices and saved reference. Customers also get a private tracking link showing Pending, Confirmed, Preparing, Ready, Completed or Cancelled. Active orders refresh every 15 seconds while the tracking page is open. It remains an unpaid order request until staff confirm it.
+Browse category pages, add items to a cart, enter pickup/delivery details and generate a branded order PDF/image. Once Supabase and Netlify are connected, customers can submit an order directly to the café dashboard. The saved order total and reference come from the database. Customers use the private tracking link to see separate order/payment statuses, view the generated order receipt, see bank-transfer instructions and upload a private PDF/JPG/PNG receipt. Staff manually verify payments; uploads never mark an order paid. Active tracking refreshes every 15 seconds while open.
 
 WhatsApp-only orders and orders placed on the separate UpMenu website do not automatically appear in this dashboard. The existing UpMenu link is retained; its basket and order management remain separate.
 
@@ -30,9 +31,10 @@ WhatsApp-only orders and orders placed on the separate UpMenu website do not aut
 | `public/admin.html` | Staff sign-in and dashboard |
 | `public/track.html` | Private customer order tracking |
 | `public/assets/vendor/` | Locally bundled Supabase browser SDK |
-| `netlify/functions/` | Protected order submission and owner invitation endpoints |
+| `netlify/functions/` | Protected order submission, payment receipt and owner invitation endpoints |
 | `netlify/lib/` | Server-side Supabase requests and response helpers |
 | `supabase/schema.sql` | Tables, access policies, storage and database functions |
+| `supabase/migrations/002_bank_transfer_payments.sql` | Private payment receipt storage, submission history and staff review functions |
 | `supabase/seed.sql` | 13 categories and 84 existing products with original prices |
 | `scripts/prepare-config.cjs` | Generates browser-safe configuration during deployment |
 | `tests/` | Database permissions, API and frontend workflow tests |
@@ -45,4 +47,4 @@ Database policies protect customer records from public access. Server-side submi
 
 The included product pictures retain the existing website's source information and illustration labels. Staff should replace any placeholders with actual café photographs as needed.
 
-Customer tracking exposes only the order reference, items, totals, fulfillment, payment record and status. It never returns customer phone/address or internal staff notes. A random UUID link is required; references cannot be used to look up orders. Tracking is available for website-submitted orders, not the separate UpMenu basket. No automatic WhatsApp, email or background push notifications are configured.
+Routine customer tracking exposes order progress, items, totals, fulfillment and payment status but omits phone/address and internal staff notes. The customer order receipt fetches its contact/address fields separately using the same private tracking token; payment receipt access is limited to a matching token or authenticated staff. A random UUID link is required; references cannot be used to look up orders. Tracking is available for website-submitted orders, not the separate UpMenu basket. No automatic WhatsApp, email or background push notifications are configured.
