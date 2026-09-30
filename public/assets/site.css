@@ -84,3 +84,5 @@ h1,h2,h3,h4{letter-spacing:normal}.hero h1{letter-spacing:normal}
 .footer-grid>div:nth-child(3) a:hover{text-decoration:underline;text-decoration-color:var(--pink);text-underline-offset:3px}
 .footer-grid>div:nth-child(3) [data-delivery-info],.footer-grid>div:nth-child(3) .footer-hours{width:100%;padding:10px 12px;border-left:3px solid var(--pink);background:rgba(255,255,255,.07);border-radius:0 5px 5px 0}
 .footer-grid>div:nth-child(3) .footer-hours{margin:0}
+.delivery-location-button{margin-top:8px}
+.delivery-location-status{display:block;margin-top:7px;font-size:13px;font-weight:500;color:var(--muted);line-height:1.5}

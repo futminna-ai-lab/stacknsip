@@ -10,6 +10,7 @@
  function showLogin(){ $('login-shell').hidden=false;$('admin-shell').hidden=true;orders=[];products=[];activeOrder=null;activeProduct=null;for(const id of ['orders-list','menu-list','staff-list','order-detail']){const el=$(id);if(el)el.replaceChildren();}document.querySelectorAll('dialog[open]').forEach(d=>d.close()); }
  document.addEventListener('click',event=>{const dialog=event.target;if(!(dialog instanceof HTMLDialogElement)||!dialog.open)return;const bounds=dialog.getBoundingClientRect();if(event.clientX<bounds.left||event.clientX>bounds.right||event.clientY<bounds.top||event.clientY>bounds.bottom)dialog.close();});
  function badge(status){return `<span class="badge ${esc(status)}">${esc(status)}</span>`;}
+ function linkDeliveryMapPin(){const address=$('order-detail').querySelector('.order-details div:nth-child(3) dd');if(!address)return;const value=address.innerHTML,match=value.match(/Map pin:\s*(https:\/\/www\.google\.com\/maps\?q=-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?)/);if(!match)return;const description=value.slice(0,match.index).replace(/<br>\s*$/,'').trim();address.innerHTML=description+'<br><a href="'+esc(match[1])+'" target="_blank" rel="noopener noreferrer">Open map pin</a>';}
  async function identity(session){
   if(!session){showLogin();return;}
   if(recovery){showLogin();$('login-form').hidden=true;$('password-form').hidden=false;return;}
@@ -45,7 +46,7 @@
  document.addEventListener('click',async e=>{
   const close=e.target.closest('[data-close]');if(close){close.closest('dialog').close();return;}
   const nav=e.target.closest('[data-tab]');if(nav){await changeTab(nav.dataset.tab);return;}
-  const order=e.target.closest('[data-order]');if(order){openOrder(order.dataset.order);return;}
+  const order=e.target.closest('[data-order]');if(order){openOrder(order.dataset.order);linkDeliveryMapPin();return;}
   const product=e.target.closest('[data-product]');if(product){openProduct(product.dataset.product);return;}
   const staff=e.target.closest('[data-staff-email]');if(staff){staff.disabled=true;try{const r=await client.rpc('set_staff',{p_email:staff.dataset.staffEmail,p_active:staff.dataset.staffActive==='true'});if(r.error)throw r.error;await loadStaff();message('admin-status','Staff access updated.');}catch(error){message('admin-status',fail(error));}finally{staff.disabled=false;}}
  });
