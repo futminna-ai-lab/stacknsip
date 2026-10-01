@@ -86,3 +86,6 @@ h1,h2,h3,h4{letter-spacing:normal}.hero h1{letter-spacing:normal}
 .footer-grid>div:nth-child(3) .footer-hours{margin:0}
 .delivery-location-button{margin-top:8px}
 .delivery-location-status{display:block;margin-top:7px;font-size:13px;font-weight:500;color:var(--muted);line-height:1.5}
+.detail-price{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 14px}
+.detail-price strong{font:inherit}
+.detail-price span{font-size:14px;font-weight:500;color:var(--muted)}
