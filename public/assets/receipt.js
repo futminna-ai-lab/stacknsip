@@ -31,7 +31,7 @@
  const form=document.getElementById('order-form'),section=document.getElementById('order-checkout'),output=document.getElementById('order-result'),status=document.getElementById('order-status');
  function invalidate(){generation++;result=null;for(const url of urls)URL.revokeObjectURL(url);urls=[];if(output){output.innerHTML='';output.hidden=true;}if(status)status.textContent='';}
  function setItems(rows){items=rows;invalidate();if(section)section.hidden=!rows.length;}
- window.StackReceipt={render,pdf,message,setItems,getItems:()=>items};
+ window.StackReceipt={render,pdf,message,setItems,getItems:()=>items,openCheckout,closeCheckout};
  if(!form)return;
  form.hidden=true;
  const cartContent=document.getElementById('cart-content'),checkoutDialog=document.getElementById('order-checkout');if(cartContent){const cartObserver=new MutationObserver(()=>{const trigger=cartContent.querySelector('a[href="#order-checkout"]');if(trigger){if(trigger.textContent.trim()!=='Make order')trigger.textContent='Make order';trigger.dataset.openOrderForm='';}});cartObserver.observe(cartContent,{childList:true,subtree:true});}
