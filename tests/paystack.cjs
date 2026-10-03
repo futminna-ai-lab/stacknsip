@@ -28,6 +28,9 @@ process.env.PAYSTACK_SECRET_KEY='sk_test_private_key';
  assert.equal(created.p_reference,initialization.reference);
  assert.ok(!initialized.body.includes(process.env.PAYSTACK_SECRET_KEY));
  assert.equal((await initialize({...event,headers:{...event.headers,origin:'https://attacker.test'},body:JSON.stringify({quote_id:quoteId})})).statusCode,403);
+ process.env.PAYSTACK_PUBLIC_KEY='pk_live_public_key';
+ assert.match(JSON.parse((await initialize({...event,body:JSON.stringify({quote_id:quoteId})})).body).error,/test\/live keys do not match/i);
+ process.env.PAYSTACK_PUBLIC_KEY='pk_test_public_key';
 
  const completed=[];
  global.fetch=async(url,options)=>{

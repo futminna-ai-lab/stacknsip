@@ -3,7 +3,7 @@
  const form=document.getElementById('order-form'),output=document.getElementById('order-result'),status=document.getElementById('order-status');
  if(!form||!output)return;
  const config=window.STACK_CONFIG||{},money=n=>'₦'+Number(n).toLocaleString('en-NG'),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- let quote=null,busy=false,timer=null,uploadedReceiptPath=null;
+ let quote=null,busy=false,timer=null,uploadedReceiptPath=null,paystackCheckout=null,paystackPreparePromise=null;
  async function responseData(response,functionName){
   let data;
   try{
@@ -34,10 +34,11 @@
   const paystackDetails=`<section id="quote-payment-section" class="transfer-instructions"><h3>Pay securely online</h3><p>Continue to Paystack to pay <strong>${money(data.total)}</strong> with the payment options enabled for Stack &amp; Sip.</p><p>Your order is submitted only after Paystack confirms the payment.</p><button type="button" class="button secondary" data-paystack-checkout>Continue to Paystack</button><p id="paystack-checkout-status" role="status"></p></section><p data-expired-quote-warning hidden>This quote expired before payment. Start a new quote and check the amount before paying.</p>`;
   output.hidden=false;output.innerHTML=`<h2>Payment quote</h2><p>Quote ID: <strong>${esc(data.quote_id)}</strong></p><p>Valid until <strong>${esc(formatTime(data.expires_at))}</strong> (Africa/Lagos). The quoted prices are locked until then. <span data-quote-countdown></span></p><ul class="quote-items">${itemRows(data.items)}</ul><dl class="quote-totals"><div><dt>Items</dt><dd>${money(data.subtotal)}</dd></div><div><dt>${data.delivery_fee?'Delivery charge':'Pickup'}</dt><dd>${money(data.delivery_fee)}</dd></div><div><dt>Amount to pay</dt><dd><strong>${money(data.total)}</strong></dd></div></dl>${paystack?paystackDetails:transferDetails}<button class="text-button" type="button" data-reset-quote>Start a new quote</button>`;
   startCountdown();
+  if(paystack)preparePaystack();
  }
  function startCountdown(){
   clearInterval(timer);
-  const update=()=>{if(!quote)return;const left=new Date(quote.expires_at).getTime()-Date.now(),expired=left<=0,node=output.querySelector('[data-quote-countdown]');if(node)node.textContent=expired?'Expired — do not pay at this price.':Math.ceil(left/60000)+' min remaining';const bank=output.querySelector('#quote-bank-transfer'),section=output.querySelector('#quote-payment-section'),warning=output.querySelector('[data-expired-quote-warning]'),submit=output.querySelector('[data-place-order]'),payButton=output.querySelector('[data-paystack-checkout]');if(bank)bank.hidden=expired;if(warning)warning.hidden=!expired;if(submit)submit.textContent=expired?'Send receipt for café review':'Place order';if(payButton)payButton.disabled=expired;if(section&&expired)section.hidden=true;};
+  const update=()=>{if(!quote)return;const left=new Date(quote.expires_at).getTime()-Date.now(),expired=left<=0,node=output.querySelector('[data-quote-countdown]');if(node)node.textContent=expired?'Expired — do not pay at this price.':Math.ceil(left/60000)+' min remaining';const bank=output.querySelector('#quote-bank-transfer'),section=output.querySelector('#quote-payment-section'),warning=output.querySelector('[data-expired-quote-warning]'),submit=output.querySelector('[data-place-order]'),payButton=output.querySelector('[data-paystack-checkout]');if(bank)bank.hidden=expired;if(warning)warning.hidden=!expired;if(submit)submit.textContent=expired?'Send receipt for café review':'Place order';if(payButton)payButton.disabled=expired||!paystackCheckout;if(section&&expired)section.hidden=true;};
   update();timer=setInterval(update,1000);
  }
  function payloadItems(){
@@ -110,33 +111,52 @@
   }catch(error){feedback.textContent=error.message||'Could not submit this receipt. It remains private; retry or contact the café.';}
   finally{busy=false;if(quote&&submit){submit.disabled=!uploadedReceiptPath;receiptForm.elements.receipt.disabled=false;receiptForm.elements.payment_reference.disabled=false;}}
  }
- async function startPaystack(){
+ async function preparePaystack(){
+  if(!quote||quote.payment_method!=='paystack'||paystackCheckout)return;
+  if(paystackPreparePromise)return paystackPreparePromise;
+  const feedback=output.querySelector('#paystack-checkout-status'),button=output.querySelector('[data-paystack-checkout]');
+  button.disabled=true;feedback.textContent='Preparing secure Paystack checkout…';
+  paystackPreparePromise=(async()=>{
+   try{
+    const [response]=await Promise.all([
+     fetch('/.netlify/functions/initialize-paystack-payment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({quote_id:quote.quote_id})}),
+     loadPaystackInline()
+    ]);
+    const data=await responseData(response,'initialize-paystack-payment');if(!response.ok)throw Error(data?.error||'Could not prepare Paystack checkout.');
+    if(!data)throw Error('The Paystack setup service returned an empty response. Check the Netlify function logs and retry.');
+    if(!/^pk_(test|live)_/.test(data.public_key||'')||!/^SS-[A-Fa-f0-9-]{36}$/.test(data.reference||'')
+       ||!Number.isSafeInteger(data.amount_kobo)||data.amount_kobo<=0||typeof data.email!=='string')throw Error('Paystack returned invalid checkout details.');
+    if(!window.PaystackPop?.setup)throw Error('Paystack checkout could not be opened in this browser.');
+    paystackCheckout=data;feedback.textContent='Secure checkout is ready. Click Continue to Paystack to open the payment window.';button.disabled=false;
+   }catch(error){feedback.textContent=error.message||'Paystack checkout is unavailable. Retry or choose bank transfer.';button.disabled=false;}
+   finally{paystackPreparePromise=null;}
+  })();
+  return paystackPreparePromise;
+ }
+ function startPaystack(){
   if(busy||!quote||quote.payment_method!=='paystack')return;
   const feedback=output.querySelector('#paystack-checkout-status'),button=output.querySelector('[data-paystack-checkout]');
   if(new Date(quote.expires_at).getTime()<=Date.now()){feedback.textContent='This quote expired. Start a new quote before paying.';return;}
-  busy=true;button.disabled=true;feedback.textContent='Preparing secure Paystack checkout…';
+  if(!paystackCheckout||!window.PaystackPop?.setup){preparePaystack();return;}
+  busy=true;button.disabled=true;
   try{
-   const response=await fetch('/.netlify/functions/initialize-paystack-payment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({quote_id:quote.quote_id})});
-   const data=await responseData(response,'initialize-paystack-payment');if(!response.ok)throw Error(data?.error||'Could not open Paystack checkout.');
-   if(!data)throw Error('The Paystack setup service returned an empty response. Check Netlify function logs and retry.');
-   if(!/^pk_(test|live)_/.test(data.public_key||'')||!/^SS-[A-Fa-f0-9-]{36}$/.test(data.reference||'')
-      ||!Number.isSafeInteger(data.amount_kobo)||data.amount_kobo<=0||typeof data.email!=='string')throw Error('Paystack returned invalid checkout details.');
-   await loadPaystackInline();
-   if(!window.PaystackPop?.setup)throw Error('Paystack checkout could not be opened in this browser.');
-   feedback.textContent='Choose your payment method in the secure Paystack window.';
+   feedback.textContent='Opening secure Paystack checkout…';
+   const checkout=paystackCheckout;
    const handler=window.PaystackPop.setup({
-    key:data.public_key,email:data.email,amount:data.amount_kobo,ref:data.reference,
+    key:checkout.public_key,email:checkout.email,amount:checkout.amount_kobo,ref:checkout.reference,
     callback:result=>{
      const returnedReference=typeof result==='string'?result:result?.reference;
-     if(returnedReference!==data.reference){feedback.textContent='The payment reference did not match. Do not pay again; contact Stack & Sip.';return;}
-     verifyPaystack(data.reference,feedback);
+     if(returnedReference!==checkout.reference){feedback.textContent='The payment reference did not match. Do not pay again; contact Stack & Sip.';return;}
+     verifyPaystack(checkout.reference,feedback);
     },
     onClose:()=>{if(quote){feedback.textContent='Paystack checkout was closed. No order was submitted; you can reopen payment with this quote.';button.disabled=false;}}
    });
+   if(!handler||typeof handler.openIframe!=='function')throw Error('Paystack did not provide a checkout window. Check that the test/live API keys match in Netlify.');
+   feedback.textContent='Choose your payment method in the secure Paystack window.';
    handler.openIframe();
    button.disabled=true;
   }catch(error){feedback.textContent=error.message||'Paystack checkout is unavailable. Retry or choose bank transfer.';button.disabled=false;}
-  finally{busy=false;}
+  busy=false;
  }
  let paystackScriptPromise;
  function loadPaystackInline(){
