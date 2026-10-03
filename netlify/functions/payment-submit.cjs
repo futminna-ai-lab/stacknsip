@@ -1,10 +1,6 @@
 const {reply,allowed,rpc,config,headers}=require('../lib/shared.cjs');
+const {validReceipt}=require('../lib/receipt.cjs');
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-function validFile(bytes,extension){
- if(extension==='pdf')return bytes.subarray(0,5).toString('ascii')==='%PDF-';
- if(extension==='jpg')return bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff;
- return extension==='png'&&bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]));
-}
 exports.handler=async event=>{
  if(event.httpMethod!=='POST')return reply(405,{error:'Use POST'});
  try{
@@ -15,15 +11,15 @@ exports.handler=async event=>{
   const order=await rpc('track_order',{p_request_id:body.token});
   if(!order)return reply(404,{error:'Order not found. Check your private tracking link.'});
   const escapedId=order.id.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-  const match=new RegExp('^'+escapedId+'/[0-9a-f-]{36}\\.(pdf|jpg|png)$','i').exec(body.path);
+  const match=new RegExp('^'+escapedId+'/[0-9a-f-]{36}\\.(pdf|jpg|png|webp)$','i').exec(body.path);
   if(!match)return reply(400,{error:'Invalid receipt upload. Choose your file again.'});
   const {url,key}=config();
   const download=await fetch(url+'/storage/v1/object/authenticated/payment-receipts/'+body.path,{headers:headers(key),signal:AbortSignal.timeout(15000)});
   if(!download.ok)throw Error('Uploaded receipt could not be read from private storage');
   const bytes=Buffer.from(await download.arrayBuffer());
-  if(bytes.length===0||bytes.length>5242880||!validFile(bytes,match[1].toLowerCase())){
+  if(bytes.length===0||bytes.length>5242880||!validReceipt(bytes,match[1].toLowerCase())){
   try{const removed=await fetch(url+'/storage/v1/object/payment-receipts/'+body.path,{method:'DELETE',headers:headers(key),signal:AbortSignal.timeout(12000)});if(!removed.ok)console.error('Invalid payment receipt cleanup failed:',removed.status);}catch(error){console.error('Invalid payment receipt cleanup failed:',error.message);}
-   return reply(400,{error:'The uploaded file is not a valid PDF, JPG or PNG under 5 MB.'});
+   return reply(400,{error:'The uploaded file is not a valid PDF, JPG, PNG or WebP under 5 MB.'});
   }
   const saved=await rpc('submit_payment_receipt',{p_request_id:body.token,p_payment_reference:body.payment_reference.trim(),p_receipt_path:body.path});
   return reply(200,{submission:saved});

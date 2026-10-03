@@ -21,7 +21,8 @@
     const {id, name, price, description, available, photo, photoAlt} = record;
     const url = 'product.html?item=' + encodeURIComponent(id);
     const picture = photo ? `<img src="${escape(photo)}" alt="${escape(photoAlt)}" loading="lazy">` : `<div class="offer-no-photo"><span>${escape(category.title)}</span></div>`;
-    return `<article class="product offer-card" data-price="${Number(price)}" data-name="${escape(name)}" data-search="${escape((name + ' ' + description).toLowerCase())}"><a class="offer-image" href="${url}">${picture}</a><h4><a href="${url}">${escape(name)}</a></h4><span class="price">${money(price)}</span><div class="product-actions"><button class="add" type="button" data-add="${escape(id)}"${available?'':' disabled'}>${available?'Add To Cart':'Sold out'}</button></div><span class="item-cart-status" data-cart-item="${escape(id)}" aria-live="polite"></span></article>`;
+    const action=available&&window.StackShop.hasOptions(record)?`<a class="add" href="${url}">Choose options</a>`:`<button class="add" type="button" data-add="${escape(id)}"${available?'':' disabled'}>${available?'Add To Cart':'Sold out'}</button>`;
+    return `<article class="product offer-card" data-price="${Number(price)}" data-name="${escape(name)}" data-search="${escape((name + ' ' + description).toLowerCase())}"><a class="offer-image" href="${url}">${picture}</a><h4><a href="${url}">${escape(name)}</a></h4><span class="price">${money(price)}</span><div class="product-actions">${action}</div><span class="item-cart-status" data-cart-item="${escape(id)}" aria-live="polite"></span></article>`;
   }
 
   function categorySection(category) {
@@ -58,8 +59,12 @@
 
   async function loadMenu() {
     try {
-      const {categories} = await window.StackBackend.getMenu();
-      if (!Array.isArray(categories)) throw new Error('Invalid menu');
+      const menu = await window.StackBackend.getMenu();
+      if (!Array.isArray(menu.categories)) throw new Error('Invalid menu');
+      const categories = menu.categories.filter(category => category.id !== 'extras');
+      const optionsWarning = menu.optionsAvailable === false
+        ? '<p class="menu-error menu-setup-warning">The menu is visible, but online ordering is unavailable until the database menu-option migrations are applied. Please contact the café to order.</p>'
+        : '';
       const selectedId = new URLSearchParams(window.location.search).get('category');
       const selected = isCategoryPage ? categories.find(category => category.id === selectedId) : null;
       if (isCategoryPage && !selected) {
@@ -70,7 +75,7 @@
         form.hidden = true;
         document.title = 'Category not found | Stack & Sip';
       } else {
-        if (isCategoryPage) sections.innerHTML = categorySection(selected);
+        if (isCategoryPage) sections.innerHTML = optionsWarning + categorySection(selected);
         if (isCategoryPage) {
           document.title = selected.title + ' | Stack & Sip';
           categoryTitle.textContent = selected.title;
@@ -90,7 +95,7 @@
       if (filters) filters.innerHTML = (isCategoryPage ? '<a class="filter" href="./#categories">All categories</a>' : '') + categories.map(category => `<a class="filter${selected?.id === category.id ? ' active' : ''}" href="${categoryUrl(category.id)}"${selected?.id === category.id ? ' aria-current="page"' : ''}>${escape(category.title)}</a>`).join('');
       window.StackShop.refresh();
       const tiles = document.getElementById('category-tiles');
-      if (tiles) tiles.innerHTML = categories.map(category => `<a class="category-tile${category.photo ? ' has-photo' : ''}" href="${categoryUrl(category.id)}">${category.photo ? `<img src="${escape(category.photo)}" alt="${escape(category.photoAlt)}" loading="lazy">` : ''}<span>${escape(category.title)}<small>${pricedCount(category)} ${pricedCount(category) === 1 ? 'offer' : 'offers'}</small></span></a>`).join('');
+      if (tiles) tiles.innerHTML = optionsWarning + categories.map(category => `<a class="category-tile${category.photo ? ' has-photo' : ''}" href="${categoryUrl(category.id)}">${category.photo ? `<img src="${escape(category.photo)}" alt="${escape(category.photoAlt)}" loading="lazy">` : ''}<span>${escape(category.title)}<small>${pricedCount(category)} ${pricedCount(category) === 1 ? 'offer' : 'offers'}</small></span></a>`).join('');
     } catch (error) {
       const errorTarget = sections || document.getElementById('category-tiles');
       errorTarget.innerHTML = '<p class="menu-error">The menu could not load. <a href="">Try again</a> or <a href="https://wa.me/2348161248972">contact us on WhatsApp</a>.</p>';
@@ -107,5 +112,6 @@
     cards.sort((a, b) => sort.value === 'price-asc' ? Number(a.dataset.price) - Number(b.dataset.price) : sort.value === 'price-desc' ? Number(b.dataset.price) - Number(a.dataset.price) : sort.value === 'name' ? a.dataset.name.localeCompare(b.dataset.name) : Number(a.dataset.menuOrder) - Number(b.dataset.menuOrder));
     cards.forEach(card => grid.appendChild(card));
   });
+  window.addEventListener('stack-menu-updated',()=>loadMenu().catch(error=>console.error('Customer menu refresh failed:',error)));
   loadMenu();
 })();

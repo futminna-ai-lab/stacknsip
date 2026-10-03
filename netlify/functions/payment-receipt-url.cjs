@@ -11,12 +11,16 @@ exports.handler=async event=>{
   if(!allowed(event))return reply(403,{error:'Open the order through the café website.'});
   if((event.body||'').length>3000)return reply(413,{error:'Invalid receipt request.'});
   const body=JSON.parse(event.body||'{}');
-  if(!uuid.test(body.submission_id||''))return reply(400,{error:'Invalid receipt request.'});
+  if(body.quote_id&&!uuid.test(body.quote_id))return reply(400,{error:'Invalid receipt request.'});
+  if(!body.quote_id&&!uuid.test(body.submission_id||''))return reply(400,{error:'Invalid receipt request.'});
   const authorization=event.headers.authorization||event.headers.Authorization||'';
   let path;
   if(authorization.startsWith('Bearer ')){
-   path=await rpc('staff_payment_receipt_path',{p_submission_id:body.submission_id},authorization.slice(7));
+   path=body.quote_id
+    ?await rpc('staff_expired_quote_receipt_path',{p_quote_id:body.quote_id},authorization.slice(7))
+    :await rpc('staff_payment_receipt_path',{p_submission_id:body.submission_id},authorization.slice(7));
   }else{
+   if(body.quote_id)return reply(401,{error:'Sign in as staff to review this receipt.'});
    if(!uuid.test(body.token||''))return reply(401,{error:'Use your private tracking link or sign in as staff.'});
    path=await rpc('customer_payment_receipt_path',{p_request_id:body.token,p_submission_id:body.submission_id});
   }
@@ -25,7 +29,7 @@ exports.handler=async event=>{
   const signed=await response.json();
     if(!response.ok&&(response.status===400||response.status===404))return reply(404,{error:'This payment receipt is no longer available.'});
   if(!response.ok||!signed.signedURL)throw Error(signed.message||signed.error||'Could not sign receipt URL');
-  const ext=path.split('.').pop().toLowerCase(),contentType=ext==='pdf'?'application/pdf':ext==='png'?'image/png':'image/jpeg';
+  const ext=path.split('.').pop().toLowerCase(),contentType=ext==='pdf'?'application/pdf':ext==='png'?'image/png':ext==='webp'?'image/webp':'image/jpeg';
   return reply(200,{url:absoluteSignedUrl(signed.signedURL,url),content_type:contentType,expires_in:120});
  }catch(error){
   if(error instanceof SyntaxError)return reply(400,{error:'Invalid receipt request.'});

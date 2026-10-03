@@ -6,12 +6,15 @@ This package includes the complete customer website, staff dashboard, Supabase d
 
 ## Staff can
 
-- Review customer details, items, quantities, delivery addresses and notes.
+- Review customer details, item/option snapshots, quantities, delivery addresses and notes. Orders enter this queue only after a customer submits a payment receipt.
 - Search orders and update their status: pending, confirmed, preparing, ready, completed or cancelled.
 - Record payment status, adjust an order's confirmed delivery fee and add private notes.
-- Review private bank-transfer receipts, view submission history, and verify or reject payments with a reason.
-- Change product names, prices, descriptions and availability; upload replacement pictures.
+- Review private bank-transfer receipts, view submission history, and verify or reject payments with a reason. Review Paystack payments that were received after quote expiry or no longer match available offers.
+- Change product names, prices, descriptions and availability; mark an item sold out or available directly from its menu card; upload replacement pictures.
+- Configure per-offer option groups, included selections, minimum/maximum/repeat rules, add-on prices, color swatches and option availability. Changes are optimistic-version checked and audited.
+- Review private receipts attached to expired quotes or options that became unavailable. Resolve them with a note; the system does not silently create an order or change the quoted amount.
 - Pause online ordering and change the default delivery estimate.
+- As owner, edit the bank destination and payment instructions shown at checkout. Payment configuration is version-checked, audited, and unavailable to non-owner staff or the public menu API.
 - Prepare a WhatsApp message to a customer. The staff member still taps Send.
 - Invite or revoke staff access from the owner account.
 
@@ -19,7 +22,7 @@ The dashboard checks for new orders every 30 seconds while its Orders tab is vis
 
 ## Customers can
 
-Browse category pages, add items to a cart, enter pickup/delivery details and generate a branded order PDF/image. Once Supabase and Netlify are connected, customers can submit an order directly to the café dashboard. The saved order total and reference come from the database. Customers use the private tracking link to see separate order/payment statuses, view the generated order receipt, see bank-transfer instructions and upload a private PDF/JPG/PNG receipt. Staff manually verify payments; uploads never mark an order paid. Active tracking refreshes every 15 seconds while open.
+Browse category pages, configure eligible offer choices, and get an expiring, server-calculated quote before payment. Choose bank transfer and upload a private receipt, or pay online through Paystack's secure payment-method modal. The Paystack secret remains in Netlify Functions; the server verifies the transaction and amount before creating a paid order. Late or unavailable-item payments are held for staff review rather than silently repriced or discarded. Extras are options on eligible offers, not a customer-facing category. Fulfilment is blocked until staff verifies bank-transfer payments.
 
 WhatsApp-only orders and orders placed on the separate UpMenu website do not automatically appear in this dashboard. The existing UpMenu link is retained; its basket and order management remain separate.
 
@@ -35,15 +38,21 @@ WhatsApp-only orders and orders placed on the separate UpMenu website do not aut
 | `netlify/lib/` | Server-side Supabase requests and response helpers |
 | `supabase/schema.sql` | Tables, access policies, storage and database functions |
 | `supabase/migrations/002_bank_transfer_payments.sql` | Private payment receipt storage, submission history and staff review functions |
+| `supabase/migrations/004_delivery_receipt_before_staff.sql` | Hides new bank-transfer delivery drafts until receipt submission |
+| `supabase/migrations/005_offer_customizations.sql` | Backward-compatible legacy offer validation |
+| `supabase/migrations/006_configurable_offer_options.sql` | DB-backed offer option groups, choice stock and optional disabled colors |
+| `supabase/migrations/007_quote_first_checkout.sql` | Locked expiring quotes, receipt-first order creation and payment-gated fulfilment |
+| `supabase/migrations/008_receipt_checkout_refinements.sql` | Owner-only payment instructions, quote destination snapshots, and WebP receipt support |
+| `supabase/migrations/009_paystack_payments.sql` | Quote-bound Paystack transactions, server-paid orders, idempotency and exception review |
 | `supabase/seed.sql` | 13 categories and 84 existing products with original prices |
 | `scripts/prepare-config.cjs` | Generates browser-safe configuration during deployment |
 | `tests/` | Database permissions, API and frontend workflow tests |
 
 ## Validation
 
-With Node 24 and npm installed, run `npm install`, then `npm test`. The tests execute the actual SQL in PGlite PostgreSQL and exercise server handlers and checkout DOM behavior with simulated network responses. These do not replace a real Supabase/Netlify launch test; follow the checks in SETUP.md after connecting the accounts.
+With Node 24 and npm installed, run `npm install`, then `npm test`. Tests exercise the SQL, server handlers, bank receipt upload, Paystack verification/webhooks, configurable customer options, quote-first checkout and tracking with simulated network responses. These do not replace a real Supabase/Netlify launch test; follow the checks in SETUP.md after connecting the accounts.
 
-Database policies protect customer records from public access. Server-side submission checks live prices and availability, uses retry-safe order IDs, and limits submissions per hashed client IP. Existing orders keep a snapshot of their item prices. Staff edits are recorded in the database audit log. The server secret must remain in Netlify environment variables.
+Database policies protect customer records from public access. The server creates a locked 30-minute quote from live product and option data, and atomically creates an order only after a receipt is uploaded and submitted. Quotes and uploaded receipt evidence remain private; existing orders keep their item/option snapshots. Staff edits are version checked and recorded in the audit log. The server secret must remain in Netlify environment variables.
 
 The included product pictures retain the existing website's source information and illustration labels. Staff should replace any placeholders with actual café photographs as needed.
 

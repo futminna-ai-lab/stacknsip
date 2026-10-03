@@ -1,14 +1,14 @@
 const {randomUUID}=require('node:crypto');
 const {reply,allowed,rpc,config,headers}=require('../lib/shared.cjs');
+const {fileTypes}=require('../lib/receipt.cjs');
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const fileTypes={'application/pdf':'pdf','image/jpeg':'jpg','image/png':'png'};
 exports.handler=async event=>{
  if(event.httpMethod!=='POST')return reply(405,{error:'Use POST'});
  try{
   if(!allowed(event))return reply(403,{error:'Open the private order tracking page.'});
   if((event.body||'').length>3000)return reply(413,{error:'Invalid upload request.'});
   const body=JSON.parse(event.body||'{}');
-  if(!uuid.test(body.token||'')||!fileTypes[body.content_type])return reply(400,{error:'Choose a PDF, JPG or PNG receipt.'});
+  if(!uuid.test(body.token||'')||!fileTypes[body.content_type])return reply(400,{error:'Choose a PDF, JPG, PNG or WebP receipt.'});
   const order=await rpc('track_order',{p_request_id:body.token});
   if(!order)return reply(404,{error:'Order not found. Check your private tracking link.'});
   if(order.payment_status!=='unpaid'&&order.payment_status!=='rejected')return reply(409,{error:'This order is not accepting another receipt.'});

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "node scripts/prepare-config.cjs",
-    "test": "node tests/database.mjs && node tests/api.cjs && node tests/frontend.mjs && node tests/tracking.mjs"
+    "test": "node tests/database.mjs && node tests/api.cjs && node tests/customizations.mjs && node tests/frontend.mjs && node tests/tracking.mjs && node tests/paystack.cjs"
   },
   "engines": {
     "node": ">=22"

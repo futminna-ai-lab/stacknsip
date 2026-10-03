@@ -87,7 +87,10 @@ create trigger settings_audit before update on public.shop_settings for each row
 create function public.submit_order(p_request_id uuid,p_customer jsonb,p_items jsonb,p_fingerprint text) returns jsonb language plpgsql security definer set search_path='' as $$
 declare
  existing public.orders%rowtype; settings public.shop_settings%rowtype; product public.products%rowtype;
- item jsonb; snapshot jsonb='[]'; payload jsonb; subtotal integer=0; qty integer; fee integer=0;
+ item jsonb; extra_item jsonb; product_extra public.products%rowtype;
+ extra_snapshot jsonb; extra_match text[]; extra_total integer;
+ syrup_count integer; topping_count integer; unit_price integer;
+ snapshot jsonb='[]'; payload jsonb; subtotal integer=0; qty integer; fee integer=0;
  v_name text=trim(coalesce(p_customer->>'name','')); v_phone text=trim(coalesce(p_customer->>'phone',''));
  v_type text=coalesce(p_customer->>'fulfillment',''); v_address text=trim(coalesce(p_customer->>'address',''));
  v_notes text=trim(coalesce(p_customer->>'notes','')); ref text; new_id uuid;
@@ -106,15 +109,43 @@ begin
  if (select count(*) from public.orders where fingerprint=p_fingerprint and created_at>now()-interval '1 hour')>=10 then raise exception 'Too many order requests. Please contact the café.';end if;
  select * into settings from public.shop_settings where id=true;
  if not found or not settings.accepting_orders then raise exception 'Online orders are paused. Please contact the café.';end if;
- if (select count(distinct value->>'id') from jsonb_array_elements(p_items))<>jsonb_array_length(p_items) then raise exception 'Duplicate items';end if;
+ if (select count(distinct (value->>'id')||'|'||coalesce(value->'extras','[]'::jsonb)::text) from jsonb_array_elements(p_items))<>jsonb_array_length(p_items) then raise exception 'Duplicate items';end if;
  for item in select value from jsonb_array_elements(p_items) loop
-   if item->>'quantity' !~ '^[0-9]{1,2}$' then raise exception 'Invalid quantity';end if;
+   if jsonb_typeof(item)<>'object' or item->>'id' is null or coalesce(item->>'quantity','') !~ '^[0-9]{1,2}$' then raise exception 'Invalid quantity';end if;
+   if item ? 'extras' and jsonb_typeof(item->'extras')<>'array' then raise exception 'Invalid extras';end if;
+   if jsonb_typeof(coalesce(item->'extras','[]'::jsonb))='array' and jsonb_array_length(coalesce(item->'extras','[]'::jsonb))>8 then raise exception 'Invalid extras';end if;
    qty=(item->>'quantity')::integer; if qty not between 1 and 99 then raise exception 'Invalid quantity';end if;
    select * into product from public.products where id=item->>'id' for share;
    if not found or not product.available then raise exception 'An item is unavailable. Refresh the menu.';end if;
-   if subtotal::bigint+product.price::bigint*qty>100000000 then raise exception 'Order exceeds the online limit. Contact the café.';end if;
-   subtotal=subtotal+product.price*qty;
-   snapshot=snapshot||jsonb_build_array(jsonb_build_object('id',product.id,'name',product.name,'category',(select title from public.categories where id=product.category_id),'price',product.price,'quantity',qty));
+   extra_total=0;syrup_count=0;topping_count=0;extra_snapshot='[]';
+   if exists(select 1 from jsonb_array_elements_text(coalesce(item->'extras','[]'::jsonb)) selected(id) group by id having count(*)>1) then raise exception 'Invalid extras';end if;
+   for extra_item in select value from jsonb_array_elements(coalesce(item->'extras','[]'::jsonb)) loop
+     if jsonb_typeof(extra_item)<>'string' then raise exception 'Invalid extras';end if;
+     select * into product_extra from public.products where id=extra_item#>>'{}' for share;
+     if not found or not product_extra.available or product_extra.category_id<>'extras' then raise exception 'An item is unavailable. Refresh the menu.';end if;
+     if product_extra.description='Sauces' then
+       extra_match=regexp_match(lower(product.description),'([0-9]+)\s+(syrups?|sauces?)');
+       if extra_match is null then raise exception 'Invalid extras';end if;
+       syrup_count=syrup_count+1;
+       if syrup_count>extra_match[1]::integer then raise exception 'Invalid extras';end if;
+     elsif product_extra.description='Toppings' then
+       extra_match=regexp_match(lower(product.description),'([0-9]+)\s+toppings?');
+       if extra_match is null then raise exception 'Invalid extras';end if;
+       topping_count=topping_count+1;
+       if topping_count>extra_match[1]::integer then raise exception 'Invalid extras';end if;
+     else raise exception 'Invalid extras';
+     end if;
+     extra_total=extra_total+product_extra.price;
+     extra_snapshot=extra_snapshot||jsonb_build_array(jsonb_build_object('id',product_extra.id,'name',product_extra.name,'price',product_extra.price));
+   end loop;
+   extra_match=regexp_match(lower(product.description),'([0-9]+)\s+(syrups?|sauces?)');
+   if syrup_count>coalesce(extra_match[1]::integer,0) then raise exception 'Invalid extras';end if;
+   extra_match=regexp_match(lower(product.description),'([0-9]+)\s+toppings?');
+   if topping_count>coalesce(extra_match[1]::integer,0) then raise exception 'Invalid extras';end if;
+   unit_price=product.price+extra_total;
+   if subtotal::bigint+unit_price::bigint*qty>100000000 then raise exception 'Order exceeds the online limit. Contact the café.';end if;
+   subtotal=subtotal+unit_price*qty;
+   snapshot=snapshot||jsonb_build_array(jsonb_build_object('id',product.id,'name',product.name,'category',(select title from public.categories where id=product.category_id),'price',unit_price,'quantity',qty,'extras',extra_snapshot));
  end loop;
  if v_type='Delivery' then fee=settings.delivery_fee;end if;
  new_id=gen_random_uuid();ref='SS-'||to_char(now() at time zone 'Africa/Lagos','YYYYMMDD')||'-'||upper(substr(replace(new_id::text,'-',''),1,12));
