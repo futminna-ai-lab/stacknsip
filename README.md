@@ -44,6 +44,7 @@ WhatsApp-only orders and orders placed on the separate UpMenu website do not aut
 | `supabase/migrations/007_quote_first_checkout.sql` | Locked expiring quotes, receipt-first order creation and payment-gated fulfilment |
 | `supabase/migrations/008_receipt_checkout_refinements.sql` | Owner-only payment instructions, quote destination snapshots, and WebP receipt support |
 | `supabase/migrations/009_paystack_payments.sql` | Quote-bound Paystack transactions, server-paid orders, idempotency and exception review |
+| `supabase/migrations/010_included_options_are_optional.sql` | Stops included package allowances from being treated as required paid extras |
 | `supabase/seed.sql` | 13 categories and 84 existing products with original prices |
 | `scripts/prepare-config.cjs` | Generates browser-safe configuration during deployment |
 | `tests/` | Database permissions, API and frontend workflow tests |

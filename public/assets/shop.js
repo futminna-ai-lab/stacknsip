@@ -180,7 +180,7 @@
       if(missing){if(optionStatus)optionStatus.textContent='Choose at least '+minimumSelections(missing)+' '+missing.name.toLowerCase()+'.';return;}
       if(optionStatus)optionStatus.textContent='';
       const lineId=add.dataset.add+(extras.length?'~'+extras.join(','):'');
-      cart[lineId]=Math.min(99,(cart[lineId]||0)+qty);persist();return;
+      cart[lineId]=Math.min(99,(cart[lineId]||0)+qty);persist();renderCart();return;
     }
     const remove=event.target.closest('[data-remove]');if(remove){const id=remove.dataset.remove;if(catalog.has(id)){for(const lineId of Object.keys(cart))if(productId(lineId)===id)delete cart[lineId];}else delete cart[id];persist();renderCart();return;}
     const button=event.target.closest('[data-quantity]');if(!button)return;

@@ -78,6 +78,16 @@ await db.exec(fs.readFileSync('supabase/migrations/008_receipt_checkout_refineme
 await db.exec(fs.readFileSync('supabase/migrations/008_receipt_checkout_refinements.sql','utf8'));
 await db.exec(fs.readFileSync('supabase/migrations/009_paystack_payments.sql','utf8'));
 await db.exec(fs.readFileSync('supabase/migrations/009_paystack_payments.sql','utf8'));
+const pancakeSyrupGroup=(await db.query("select id,included_selections,maximum_selections from public.product_option_groups where product_id='mini-pancakes:2' and name='Syrups'")).rows[0];
+await db.query('update public.product_option_groups set required=true,minimum_selections=included_selections where id=$1',[pancakeSyrupGroup.id]);
+await db.exec(fs.readFileSync('supabase/migrations/010_included_options_are_optional.sql','utf8'));
+const repairedPancakeGroup=(await db.query('select required,minimum_selections,included_selections,maximum_selections,version from public.product_option_groups where id=$1',[pancakeSyrupGroup.id])).rows[0];
+assert.equal(repairedPancakeGroup.required,false);assert.equal(repairedPancakeGroup.minimum_selections,0);
+assert.equal(repairedPancakeGroup.included_selections,pancakeSyrupGroup.included_selections);
+assert.equal(repairedPancakeGroup.maximum_selections,pancakeSyrupGroup.maximum_selections);
+const repairedPancakeVersion=repairedPancakeGroup.version;
+await db.exec(fs.readFileSync('supabase/migrations/010_included_options_are_optional.sql','utf8'));
+assert.equal((await db.query('select version from public.product_option_groups where id=$1',[pancakeSyrupGroup.id])).rows[0].version,repairedPancakeVersion);
 await role('authenticated',owner);
 await reject(()=>db.query("select * from public.shop_settings where id=true"),/permission denied|column/i);
 await reject(()=>db.query("update public.shop_settings set bank_name='Not allowed' where id=true"),/permission denied/);
@@ -147,6 +157,10 @@ assert.equal((await db.query('select status from public.paystack_transactions wh
 await role('service_role');
 const noExtrasQuote=(await db.query('select public.create_order_quote($1,$2,$3,$4) as result',[randomUUID(),JSON.stringify(quoteCustomer),JSON.stringify([{id:'bubble-drops:0',quantity:1,options:[{group_id:optionGroup,choice_ids:[]},{group_id:toppingsGroup,choice_ids:[]}]}]),'c'.repeat(64)])).rows[0].result;
 assert.equal(noExtrasQuote.total,8500);assert.equal(noExtrasQuote.items[0].option_total,0);
+const pancakeGroups=(await db.query("select id from public.product_option_groups where product_id='mini-pancakes:2' and available")).rows;
+const pancakePrice=(await db.query("select price from public.products where id='mini-pancakes:2'")).rows[0].price;
+const includedPancakeQuote=(await db.query('select public.create_order_quote($1,$2,$3,$4) as result',[randomUUID(),JSON.stringify(quoteCustomer),JSON.stringify([{id:'mini-pancakes:2',quantity:1,options:pancakeGroups.map(group=>({group_id:group.id,choice_ids:[]}))}]),'d'.repeat(64)])).rows[0].result;
+assert.equal(includedPancakeQuote.total,pancakePrice);assert.equal(includedPancakeQuote.items[0].option_total,0);
 await db.query("update public.products set available=false where id='bubble-drops:0'");
 await reject(()=>db.query('select public.create_order_quote($1,$2,$3,$4)',[randomUUID(),JSON.stringify(quoteCustomer),JSON.stringify(quoteItems),'e'.repeat(64)]),/15pcs is sold out/);
 await db.query("update public.products set available=true where id='bubble-drops:0'");
