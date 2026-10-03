@@ -9,13 +9,13 @@
  <link rel="preconnect" href="https://fonts.googleapis.com">
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
- <link rel="stylesheet" href="assets/site.css?v=paystack-info-20261003">
+ <link rel="stylesheet" href="assets/site.css?v=payment-method-info-20261003">
  <link rel="stylesheet" href="assets/offer-options.css">
  <script src="assets/config.js" defer></script>
  <script src="assets/backend.js?v=extra-prices-20261003" defer></script>
- <script src="assets/receipt.js?v=quote-replaces-details-20261003" defer></script>
+ <script src="assets/receipt.js?v=bank-transfer-info-20261003" defer></script>
  <script src="assets/shop.js?v=cart-update-20261003" defer></script>
- <script src="assets/quote-checkout.js?v=quote-replaces-details-20261003" defer></script>
+ <script src="assets/quote-checkout.js?v=bank-transfer-info-20261003" defer></script>
  <script src="assets/announcement.js" defer></script>
 </head>
 <body class="category-page">
@@ -57,9 +57,10 @@
      <label class="payment-method-card"><input type="radio" name="payment_method" value="paystack"><span>By Paystack</span></label>
     </div>
    </fieldset>
-   <p class="paystack-method-info" data-paystack-method-info hidden><strong>Pay securely by card, bank transfer, USSD, or wallet.</strong><br>Payment is verified before your order is confirmed.</p>
+   <p class="payment-method-info" data-paystack-method-info hidden><strong>Pay securely by card, bank transfer, USSD, or wallet.</strong><br>Payment is verified before your order is confirmed.</p>
+   <p class="payment-method-info" data-bank-transfer-method-info><strong>Pay by bank transfer.</strong><br>Your quote will show the cafe account details. Transfer the exact amount, then upload your payment receipt to submit the order for review.</p>
    <label class="order-honeypot" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>
-   <button type="submit" class="button secondary" data-checkout-submit>Generate order receipt &amp; bank instructions</button>
+   <button type="submit" class="button secondary" data-checkout-submit>Generate order receipt &amp; upload payment receipt</button>
    <p id="order-status" role="status"></p>
   </form>
   <div id="order-result" hidden aria-live="polite"></div>
