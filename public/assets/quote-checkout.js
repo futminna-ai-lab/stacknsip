@@ -3,6 +3,7 @@
  const form=document.getElementById('order-form'),output=document.getElementById('order-result'),status=document.getElementById('order-status');
  if(!form||!output)return;
  const config=window.STACK_CONFIG||{},money=n=>'₦'+Number(n).toLocaleString('en-NG'),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const checkoutDialog=document.getElementById('order-checkout'),checkoutTitle=document.getElementById('checkout-title'),checkoutDescription=document.getElementById('checkout-description');
  let quote=null,busy=false,timer=null,uploadedReceiptPath=null,paystackCheckout=null,paystackPreparePromise=null;
  async function responseData(response,functionName){
   let data;
@@ -29,15 +30,15 @@
  function itemRows(items){return items.map(item=>`<li><strong>${esc(item.quantity)} × ${esc(item.name)}</strong><span>${money(item.base_price)} base + ${money(item.option_total)} extras = ${money(item.price)} each · ${money(item.price)} × ${esc(item.quantity)} = ${money(item.line_total)}</span>${item.extras?.length?`<small>${item.extras.map(option=>`${esc(option.group)}: ${esc(option.name)} (${option.included?'included in offer price':'+'+money(option.price)})`).join(' · ')}</small>`:''}</li>`).join('');}
  function showQuote(data){
   quote=data;uploadedReceiptPath=null;toggleForm(true);form.hidden=true;
+  if(checkoutTitle)checkoutTitle.textContent='Payment quote';
+  if(checkoutDescription)checkoutDescription.hidden=true;
   const paystack=data.payment_method==='paystack';
   const transferDetails=`<section id="quote-bank-transfer" class="transfer-instructions"><h3>Bank transfer</h3><dl><div><dt>Bank</dt><dd>${esc(data.bank_name)}</dd></div><div><dt>Account name</dt><dd>${esc(data.account_name)}</dd></div><div><dt>Account number</dt><dd>${esc(data.account_number)}</dd></div><div><dt>Amount</dt><dd>${money(data.total)}</dd></div></dl><p>Transfer the exact quoted amount. Your order is not sent to staff until you upload the receipt and place the order.</p><p>${esc(data.payment_instructions).replace(/\r?\n/g,'<br>')}</p></section><p data-expired-quote-warning hidden>This quote expired. Do not pay using its amount. If you already paid, upload the receipt below so the café can review it; the expired quote will not create an order or silently reprice your payment.</p><form id="quote-receipt-form"><label>Payment receipt (PDF, JPG, PNG or WebP; maximum 5 MB)<input name="receipt" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" required></label><label>Payment reference (optional)<input name="payment_reference" maxlength="120"></label><button class="button secondary" type="button" data-upload-receipt>Upload receipt</button><button class="button secondary" type="submit" data-place-order disabled>Place order</button><p id="quote-receipt-status" role="status"></p></form>`;
   const paystackDetails=`<section id="quote-payment-section" class="transfer-instructions"><h3>Pay securely online</h3><p>Pay <strong>${money(data.total)}</strong> using the options available in Paystack: card, bank transfer, USSD, or wallet.</p><p>Your order is confirmed only after Paystack verifies payment.</p><button type="button" class="button secondary" data-paystack-checkout>Make payment</button><p id="paystack-checkout-status" role="status"></p></section><p data-expired-quote-warning hidden>This quote expired before payment. Start a new quote and check the amount before paying.</p>`;
-  output.hidden=false;output.innerHTML=`<h2>Payment quote</h2><p>Quote ID: <strong>${esc(data.quote_id)}</strong></p><p>Valid until <strong>${esc(formatTime(data.expires_at))}</strong> (Africa/Lagos). The quoted prices are locked until then. <span data-quote-countdown></span></p><ul class="quote-items">${itemRows(data.items)}</ul><dl class="quote-totals"><div><dt>Items</dt><dd>${money(data.subtotal)}</dd></div><div><dt>${data.delivery_fee?'Delivery charge':'Pickup'}</dt><dd>${money(data.delivery_fee)}</dd></div><div><dt>Amount to pay</dt><dd><strong>${money(data.total)}</strong></dd></div></dl>${paystack?paystackDetails:transferDetails}<button class="text-button" type="button" data-reset-quote>Start a new quote</button>`;
-  const checkoutDialog=document.getElementById('order-checkout');
-  if(checkoutDialog?.open)checkoutDialog.close();
+  output.hidden=false;output.innerHTML=`<p>Quote ID: <strong>${esc(data.quote_id)}</strong></p><p>Valid until <strong>${esc(formatTime(data.expires_at))}</strong> (Africa/Lagos). The quoted prices are locked until then. <span data-quote-countdown></span></p><ul class="quote-items">${itemRows(data.items)}</ul><dl class="quote-totals"><div><dt>Items</dt><dd>${money(data.subtotal)}</dd></div><div><dt>${data.delivery_fee?'Delivery charge':'Pickup'}</dt><dd>${money(data.delivery_fee)}</dd></div><div><dt>Amount to pay</dt><dd><strong>${money(data.total)}</strong></dd></div></dl>${paystack?paystackDetails:transferDetails}<button class="text-button" type="button" data-reset-quote>Start a new quote</button>`;
+  window.StackReceipt?.openCheckout?.();
   startCountdown();
   if(paystack)preparePaystack();
-  if(typeof requestAnimationFrame==='function')requestAnimationFrame(()=>output.scrollIntoView?.({behavior:'smooth',block:'start'}));
  }
  function startCountdown(){
   clearInterval(timer);
@@ -144,6 +145,7 @@
   busy=true;button.disabled=true;
   try{
    feedback.textContent='Opening secure Paystack checkout…';
+   window.StackReceipt?.closeCheckout?.();
    const checkout=paystackCheckout;
    const handler=window.PaystackPop.setup({
     key:checkout.public_key,email:checkout.email,amount:checkout.amount_kobo,ref:checkout.reference,
@@ -152,7 +154,7 @@
      if(returnedReference!==checkout.reference){feedback.textContent='The payment reference did not match. Do not pay again; contact Stack & Sip.';return;}
      verifyPaystack(checkout.reference,feedback);
     },
-    onClose:()=>{if(quote){feedback.textContent='Paystack checkout was closed. No order was submitted; you can reopen payment with this quote.';button.disabled=false;}}
+    onClose:()=>{window.StackReceipt?.openCheckout?.();if(quote&&feedback.isConnected){feedback.textContent='Paystack checkout was closed. No order was submitted; you can reopen payment with this quote.';button.disabled=false;}}
    });
    if(!handler||typeof handler.openIframe!=='function')throw Error('Paystack did not provide a checkout window. Check that the test/live API keys match in Netlify.');
    feedback.textContent='Choose your payment method in the secure Paystack window.';
@@ -182,6 +184,7 @@
    const payment=data.payment;
    if(payment.status==='paid'&&payment.tracking_token){
     clearInterval(timer);quote=null;
+    if(checkoutTitle)checkoutTitle.textContent='Payment confirmed';
     const trackingUrl=new URL('track.html',location.href).href+'#token='+encodeURIComponent(payment.tracking_token);
     output.innerHTML=`<h2>Payment confirmed</h2><p>Order reference: <strong>${esc(payment.reference)}</strong></p><p>Paystack confirmed ${money(payment.total)}. Your order is now with the café.</p><a class="button secondary" data-track-order href="${esc(trackingUrl)}">Track order</a>`;
     try{localStorage.removeItem('stacknsip-cart-v1');}catch{}
@@ -189,6 +192,7 @@
    }
    if(payment.status==='paid_review'){
     clearInterval(timer);quote=null;
+    if(checkoutTitle)checkoutTitle.textContent='Payment received — review needed';
     output.innerHTML=`<h2>Payment received — review needed</h2><p>${esc(payment.review_reason||'Paystack confirmed your payment, but the café needs to review it.')}</p><p>Paystack reference: <strong>${esc(reference)}</strong>. Contact Stack &amp; Sip and do not pay again.</p>`;
     return;
    }
@@ -201,7 +205,7 @@
  output.addEventListener('click',event=>{if(event.target.closest('[data-paystack-checkout]'))startPaystack();});
  output.addEventListener('change',event=>{if(event.target.matches('#quote-receipt-form [name="receipt"]')){uploadedReceiptPath=null;const place=output.querySelector('[data-place-order]');if(place)place.disabled=true;const upload=output.querySelector('[data-upload-receipt]');if(upload)upload.disabled=false;const feedback=output.querySelector('#quote-receipt-status');if(feedback)feedback.textContent='Upload this receipt to enable placing the order.';}});
  output.addEventListener('submit',event=>{if(event.target.id==='quote-receipt-form')placeOrder(event);});
- output.addEventListener('click',event=>{if(!event.target.closest('[data-reset-quote]'))return;clearInterval(timer);quote=null;paystackCheckout=null;paystackPreparePromise=null;output.replaceChildren();output.hidden=true;form.hidden=false;toggleForm(false);status.textContent='Start a new quote. The current cart and customer details are still available.';window.StackReceipt?.openCheckout?.();});
+ output.addEventListener('click',event=>{if(!event.target.closest('[data-reset-quote]'))return;clearInterval(timer);quote=null;paystackCheckout=null;paystackPreparePromise=null;output.replaceChildren();output.hidden=true;form.hidden=false;toggleForm(false);if(checkoutTitle)checkoutTitle.textContent='Customer details';if(checkoutDescription)checkoutDescription.hidden=false;status.textContent='Start a new quote. The current cart and customer details are still available.';window.StackReceipt?.openCheckout?.();});
  const emailInput=form.elements.email,emailLabel=emailInput.closest('label');
  const updatePaymentFields=()=>{const card=form.querySelector('[name="payment_method"]:checked')?.value==='paystack';emailInput.required=card;emailLabel.classList.toggle('paystack-email-required',card);const info=form.querySelector('[data-paystack-method-info]');if(info)info.hidden=!card;const button=form.querySelector('[data-checkout-submit]');if(button)button.textContent=card?'Make payment':'Generate order receipt & bank instructions';};
  form.addEventListener('change',event=>{if(event.target.matches('[name="payment_method"]'))updatePaymentFields();});

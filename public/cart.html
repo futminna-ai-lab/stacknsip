@@ -15,7 +15,7 @@
  <script src="assets/backend.js?v=extra-prices-20261003" defer></script>
  <script src="assets/receipt.js?v=checkout-dialog-20261003" defer></script>
  <script src="assets/shop.js?v=cart-update-20261003" defer></script>
- <script src="assets/quote-checkout.js?v=paystack-quote-screen-20261003" defer></script>
+ <script src="assets/quote-checkout.js?v=paystack-quote-popup-20261003" defer></script>
  <script src="assets/announcement.js" defer></script>
 </head>
 <body class="category-page">
@@ -40,7 +40,7 @@
  <dialog class="order-checkout" id="order-checkout" aria-labelledby="checkout-title">
   <button class="checkout-close" type="button" data-close-checkout aria-label="Close checkout">×</button>
   <h2 id="checkout-title">Customer details</h2>
-  <p>Get a server-validated price quote and choose bank transfer or secure Paystack checkout.</p>
+  <p id="checkout-description">Get a server-validated price quote and choose bank transfer or secure Paystack checkout.</p>
   <form id="order-form">
    <div class="customer-fields">
     <label>Full name<input name="name" autocomplete="name" required maxlength="80"></label>
@@ -62,8 +62,8 @@
    <button type="submit" class="button secondary" data-checkout-submit>Generate order receipt &amp; bank instructions</button>
    <p id="order-status" role="status"></p>
   </form>
+  <div id="order-result" hidden aria-live="polite"></div>
  </dialog>
- <div id="order-result" hidden aria-live="polite"></div>
 </main>
 <footer>
  <div class="shell footer-grid">
