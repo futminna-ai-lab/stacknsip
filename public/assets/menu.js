@@ -1,6 +1,5 @@
 (() => {
   'use strict';
-  const orderingUrl = 'https://stack-sip.orderwebsite.com/';
   const money = value => '₦' + Number(value).toLocaleString('en-NG');
   const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const categoryUrl = id => 'category.html?category=' + encodeURIComponent(id);
