@@ -13,7 +13,7 @@
  <link rel="stylesheet" href="assets/offer-options.css">
  <script src="assets/config.js" defer></script>
  <script src="assets/backend.js?v=extra-prices-20261003" defer></script>
- <script src="assets/receipt.js?v=bank-transfer-info-20261003" defer></script>
+ <script src="assets/receipt.js?v=bank-transfer-dialog-20261004" defer></script>
  <script src="assets/shop.js?v=cart-update-20261003" defer></script>
  <script src="assets/quote-checkout.js?v=bank-transfer-info-20261003" defer></script>
  <script src="assets/announcement.js" defer></script>
@@ -37,7 +37,7 @@
  <nav class="breadcrumbs"><a href="./">Home</a><a href="./#categories">Menu</a></nav>
  <h1>Your cart</h1>
  <div id="cart-content" aria-live="polite"><p class="menu-loading">Loading cart…</p></div>
- <dialog class="order-checkout" id="order-checkout" aria-labelledby="checkout-title">
+ <dialog class="order-checkout" id="order-checkout" aria-labelledby="checkout-title" closedby="closerequest">
   <button class="checkout-close" type="button" data-close-checkout aria-label="Close checkout">×</button>
   <h2 id="checkout-title">Customer details</h2>
   <p id="checkout-description">Get a server-validated price quote and choose bank transfer or secure Paystack checkout.</p>
