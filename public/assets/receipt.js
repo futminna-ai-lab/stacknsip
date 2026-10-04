@@ -38,7 +38,6 @@
  function openCheckout(){const showingResult=output&&!output.hidden;form.hidden=showingResult;if(checkoutDialog?.showModal){if(!checkoutDialog.open)checkoutDialog.showModal();}else if(checkoutDialog)checkoutDialog.setAttribute('open','');if(!showingResult)form.elements.name.focus({preventScroll:true});}
  function closeCheckout(){if(checkoutDialog?.close)checkoutDialog.close();else checkoutDialog?.removeAttribute('open');}
  document.addEventListener('click',event=>{const trigger=event.target.closest('[data-open-order-form]');if(trigger){event.preventDefault();openCheckout();return;}if(event.target.closest('[data-close-checkout]'))closeCheckout();});
- checkoutDialog?.addEventListener('click',event=>{if(event.target===checkoutDialog)closeCheckout();});
  checkoutDialog?.addEventListener('keydown',event=>{if(event.key==='Escape'&&!checkoutDialog.close){event.preventDefault();closeCheckout();}});
  function addressVisibility(){const delivery=form.elements.fulfillment.value==='Delivery';document.getElementById('delivery-address-wrap').hidden=!delivery;form.elements.address.required=delivery;}
  addressVisibility();
