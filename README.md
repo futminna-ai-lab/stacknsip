@@ -1,20 +1,20 @@
 # Stack & Sip website and staff dashboard
 
-This package includes the complete customer website, staff dashboard, Supabase database setup and Netlify server functions. The café design, hero image, category pages, purple cart buttons, menu prices and WhatsApp PDF/image cards are retained. Every customer page has a shared header with sliding opening hours and a visible Staff login button.
+This package includes the complete customer website, staff dashboard, Supabase database setup and Netlify server functions. The café design, hero image, category pages, purple cart buttons, menu prices and checkout receipt flow are retained. Every customer page has a shared header with sliding opening hours and a visible Staff login button.
 
 **Start with [SETUP.md](SETUP.md).** Your Supabase URL and browser-safe publishable key are configured. Database installation, the private Netlify server key and deployment are still required. No passwords or secret/service-role keys are included.
 
 ## Staff can
 
-- Review customer details, item/option snapshots, quantities, delivery addresses and notes. Orders enter this queue only after a customer submits a payment receipt.
+- Review orders, server-validated item/option snapshots, quantities, delivery addresses and notes. Bank-transfer orders enter the queue after receipt submission; Paystack orders enter after server-side payment verification.
 - Search orders and update their status: pending, confirmed, preparing, ready, completed or cancelled.
 - Record payment status, adjust an order's confirmed delivery fee and add private notes.
-- Review private bank-transfer receipts, view submission history, and verify or reject payments with a reason. Review Paystack payments that were received after quote expiry or no longer match available offers.
+- Review private bank-transfer receipts, view submission history, and verify or reject payments with a reason. Review Paystack payments that arrived after quote expiry or no longer match available offers.
 - Change product names, prices, descriptions and availability; mark an item sold out or available directly from its menu card; upload replacement pictures.
 - Configure per-offer option groups, included selections, minimum/maximum/repeat rules, add-on prices, color swatches and option availability. Changes are optimistic-version checked and audited.
-- Review private receipts attached to expired quotes or options that became unavailable. Resolve them with a note; the system does not silently create an order or change the quoted amount.
+- Review receipts attached to expired quotes or options that became unavailable. Resolve them with a note; the system does not silently create an order or change the quoted amount.
 - Pause online ordering and change the default delivery estimate.
-- As owner, edit the bank destination and payment instructions shown at checkout. Payment configuration is version-checked, audited, and unavailable to non-owner staff or the public menu API.
+- As owner, edit the bank destination and payment instructions shown on customer tracking pages. Payment configuration is version-checked, audited, and unavailable to non-owner staff or the public menu API.
 - Prepare a WhatsApp message to a customer. The staff member still taps Send.
 - Invite or revoke staff access from the owner account.
 
@@ -22,9 +22,9 @@ The dashboard checks for new orders every 30 seconds while its Orders tab is vis
 
 ## Customers can
 
-Browse category pages, configure eligible offer choices, and get an expiring, server-calculated quote before payment. Choose bank transfer and upload a private receipt, or pay online through Paystack's secure payment-method modal. The Paystack secret remains in Netlify Functions; the server verifies the transaction and amount before creating a paid order. Late or unavailable-item payments are held for staff review rather than silently repriced or discarded. Extras are options on eligible offers, not a customer-facing category. Fulfilment is blocked until staff verifies bank-transfer payments.
+Browse categories and configure offer choices, then enter customer details and choose bank transfer or Paystack. Bank transfer shows a locked quote, then accepts a receipt upload before placing the order. Paystack opens its secure payment window and creates an order only after server-side payment verification. Current prices and option availability are checked by the server before payment. Extras are options on eligible offers, not a customer-facing category. Fulfilment is blocked until staff verifies bank-transfer payments.
 
-WhatsApp-only orders and orders placed on the separate UpMenu website do not automatically appear in this dashboard. The existing UpMenu link is retained; its basket and order management remain separate.
+Orders placed on the separate UpMenu website do not automatically appear in this dashboard. The existing UpMenu link is retained; its basket and order management remain separate.
 
 ## Project layout
 
@@ -45,15 +45,17 @@ WhatsApp-only orders and orders placed on the separate UpMenu website do not aut
 | `supabase/migrations/008_receipt_checkout_refinements.sql` | Owner-only payment instructions, quote destination snapshots, and WebP receipt support |
 | `supabase/migrations/009_paystack_payments.sql` | Quote-bound Paystack transactions, server-paid orders, idempotency and exception review |
 | `supabase/migrations/010_included_options_are_optional.sql` | Stops included package allowances from being treated as required paid extras |
+| `supabase/migrations/011_order_card_submission.sql` | Legacy service-role-only direct-submission RPC; the public HTTP endpoint is retired |
+| `supabase/migrations/012_release_receipt_verified_deliveries.sql` | Releases delivery orders into the staff queue when payment receipts are submitted |
 | `supabase/seed.sql` | 13 categories and 84 existing products with original prices |
 | `scripts/prepare-config.cjs` | Generates browser-safe configuration during deployment |
 | `tests/` | Database permissions, API and frontend workflow tests |
 
 ## Validation
 
-With Node 24 and npm installed, run `npm install`, then `npm test`. Tests exercise the SQL, server handlers, bank receipt upload, Paystack verification/webhooks, configurable customer options, quote-first checkout and tracking with simulated network responses. These do not replace a real Supabase/Netlify launch test; follow the checks in SETUP.md after connecting the accounts.
+With Node 24 and npm installed, run `npm install`, then `npm test`. Tests exercise the SQL, server handlers, bank receipt upload, Paystack verification/webhooks, configurable customer options, quote checkout and tracking with simulated network responses. These do not replace a real Supabase/Netlify launch test; follow the checks in SETUP.md after connecting the accounts.
 
-Database policies protect customer records from public access. The server creates a locked 30-minute quote from live product and option data, and atomically creates an order only after a receipt is uploaded and submitted. Quotes and uploaded receipt evidence remain private; existing orders keep their item/option snapshots. Staff edits are version checked and recorded in the audit log. The server secret must remain in Netlify environment variables.
+Database policies protect customer records from public access. The server calculates locked quotes from live product and option data. Bank-transfer orders are created only after a receipt is submitted, while Paystack orders are created only after server-side payment verification. Quotes and uploaded receipt evidence remain private; existing orders keep their item/option snapshots. Staff edits are version checked and recorded in the audit log. The server secret must remain in Netlify environment variables.
 
 The included product pictures retain the existing website's source information and illustration labels. Staff should replace any placeholders with actual café photographs as needed.
 

@@ -1,4 +1,6 @@
 const {reply}=require('../lib/shared.cjs');
-exports.handler=async event=>event.httpMethod==='POST'
- ?reply(410,{error:'Direct order submission is disabled. Create a current quote, upload payment evidence and place the order through checkout.'})
- :reply(405,{error:'Use POST'});
+
+exports.handler=async event=>{
+ if(event.httpMethod!=='POST')return reply(405,{error:'Use POST'});
+ return reply(410,{error:'Direct order submission is retired. Use the bank-transfer or Paystack checkout to submit your order.'});
+};

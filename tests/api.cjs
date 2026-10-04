@@ -17,7 +17,7 @@ const event={httpMethod:'POST',headers:{host:'example.netlify.app',origin:'https
 const uuid=()=>randomUUID();
 (async()=>{
  assert.equal((await submit({...event,httpMethod:'GET'})).statusCode,405);
- assert.equal((await submit(event)).statusCode,410);
+ const retiredSubmission=await submit(event);assert.equal(retiredSubmission.statusCode,410);assert.match(retiredSubmission.body,/bank-transfer or Paystack checkout/i);assert.doesNotMatch(retiredSubmission.body,/WhatsApp/i);
  assert.equal((await createQuote({...event,headers:{...event.headers,origin:'https://elsewhere.test'}})).statusCode,403);
  assert.equal((await createQuote({...event,body:'{'})).statusCode,400);
  process.env.SUPABASE_URL='https://project.example.test';
